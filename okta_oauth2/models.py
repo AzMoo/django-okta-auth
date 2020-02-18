@@ -4,19 +4,25 @@ from __future__ import unicode_literals
 # from django.db import models
 import requests
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 
 class Config:
-    # Configuration object
-    org_url = settings.ORG_URL
-
-    # OpenID Specific
     grant_type = "authorization_code"
-    client_id = settings.CLIENT_ID
-    client_secret = settings.CLIENT_SECRET
-    issuer = settings.ISSUER
-    scopes = settings.SCOPES
-    redirect_uri = settings.REDIRECT_URI
+
+    def __init__(self):
+        try:
+            # Configuration object
+            self.org_url = settings.OKTA_AUTH["ORG_URL"]
+
+            # OpenID Specific
+            self.client_id = settings.OKTA_AUTH["CLIENT_ID"]
+            self.client_secret = settings.OKTA_AUTH["CLIENT_SECRET"]
+            self.issuer = settings.OKTA_AUTH["ISSUER"]
+            self.scopes = settings.OKTA_AUTH.get("SCOPES", "openid profile email")
+            self.redirect_uri = settings.OKTA_AUTH["REDIRECT_URI"]
+        except (AttributeError, KeyError):
+            raise ImproperlyConfigured("Missing Okta authentication settings")
 
 
 class DiscoveryDocument:
