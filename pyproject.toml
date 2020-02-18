@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "django-okta-auth"
 version = "0.1.0"
-description = "Django Authentication backend for Okta OpenID"
+description = "Django Authentication for Okta OpenID"
 authors = ["Matt Magin <matt.magin@cmv.com.au>"]
 license = "MIT"
 
