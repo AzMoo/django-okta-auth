@@ -1,0 +1,37 @@
+image: python:3.6
+
+stages:
+    - test
+    - package
+    - deploy
+
+before_script:
+    - pip install -U pip setuptools poetry
+    - curl -sL https://deb.nodesource.com/setup_12.x | bash -
+    - apt-get install -y nodejs
+
+style:
+    stage: test
+    script:
+        - poetry install
+        - poetry run pre-commit run --all-files
+    except:
+        - tags
+
+package:
+    stage: package
+    script:
+        - poetry install
+        - poetry build -f wheel
+        - mv dist/*.whl .
+    artifacts:
+        paths:
+            - "*.whl"
+
+deploy:
+    stage: deploy
+    script:
+        - pip install awscli
+        - aws s3 cp *.whl s3://cmv-pkg-shed/django-okta-auth/ --metadata md5=`md5sum *.whl | awk '{print $1}'`
+    only:
+        - tags
