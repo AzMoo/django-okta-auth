@@ -9,8 +9,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from .decorators import okta_login_required
-from .models import Config, DiscoveryDocument, TokenManager
-from .oauth_openid import call_introspect, call_revocation, call_userinfo_endpoint
+from .models import Config, TokenManager
 from .tokens import TokenValidator
 
 # GLOBALS
@@ -105,74 +104,68 @@ def callback(request):
         return redirect("/")
 
 
-@login_required(redirect_field_name=None, login_url="/login")
-@okta_login_required
-def home(request):
-    return render(request, "home.html", get_context(request))
+# @login_required(redirect_field_name=None)
+# @okta_login_required
+# def revocation(request):
+#     # Calls the revocation endpoint for revoking the accessToken
+#     if request.POST:
+
+#         access_token = request.POST.get("accessToken")
+
+#         discovery_doc = DiscoveryDocument(config.issuer).getJson()
+
+#         revocation = call_revocation(discovery_doc["issuer"], access_token, config)
+
+#         if revocation is None:
+#             request.session["revocation"] = "Access Token Revoked"
+#         else:
+#             request.session["revocation"] = json.dumps(revocation, indent=4)
+
+#     return HttpResponseRedirect(reverse("home"))
 
 
-@login_required(redirect_field_name=None, login_url="/login")
-@okta_login_required
-def revocation(request):
-    # Calls the revocation endpoint for revoking the accessToken
-    if request.POST:
+# @login_required(redirect_field_name=None)
+# @okta_login_required
+# def introspect(request):
+#     # Calls the introspect endpoint for checking the accessToken
 
-        access_token = request.POST.get("accessToken")
+#     if request.POST:
 
-        discovery_doc = DiscoveryDocument(config.issuer).getJson()
+#         access_token = request.POST.get("accessToken")
 
-        revocation = call_revocation(discovery_doc["issuer"], access_token, config)
+#         discovery_doc = DiscoveryDocument(config.issuer).getJson()
 
-        if revocation is None:
-            request.session["revocation"] = "Access Token Revoked"
-        else:
-            request.session["revocation"] = json.dumps(revocation, indent=4)
+#         introspect = call_introspect(discovery_doc["issuer"], access_token, config)
 
-    return HttpResponseRedirect(reverse("home"))
+#         if introspect is not None:
+#             request.session["introspect"] = json.dumps(introspect, indent=4)
 
-
-@login_required(redirect_field_name=None, login_url="/login")
-@okta_login_required
-def introspect(request):
-    # Calls the introspect endpoint for checking the accessToken
-
-    if request.POST:
-
-        access_token = request.POST.get("accessToken")
-
-        discovery_doc = DiscoveryDocument(config.issuer).getJson()
-
-        introspect = call_introspect(discovery_doc["issuer"], access_token, config)
-
-        if introspect is not None:
-            request.session["introspect"] = json.dumps(introspect, indent=4)
-
-    return HttpResponseRedirect(reverse("home"))
+#     return HttpResponseRedirect(reverse("home"))
 
 
-@login_required(redirect_field_name=None, login_url="/login")
-@okta_login_required
-def userinfo(request):
-    # Calls userInfo endpoint with accessToken
+# @login_required(redirect_field_name=None)
+# @okta_login_required
+# def userinfo(request):
+#     # Calls userInfo endpoint with accessToken
 
-    if request.POST:
-        # Build token request
-        access_token = request.POST.get("accessToken")
+#     if request.POST:
+#         # Build token request
+#         access_token = request.POST.get("accessToken")
 
-        # Send request
-        userInfo = call_userinfo_endpoint(config.issuer, access_token)
+#         # Send request
+#         userInfo = call_userinfo_endpoint(config.issuer, access_token)
 
-        if userInfo is not None:
-            request.session["userInfo"] = json.dumps(userInfo, indent=4)
+#         if userInfo is not None:
+#             request.session["userInfo"] = json.dumps(userInfo, indent=4)
 
-    return HttpResponseRedirect(reverse("home"))
+#     return HttpResponseRedirect(reverse("home"))
 
 
-@login_required(redirect_field_name=None, login_url="/login")
+@login_required(redirect_field_name=None)
 @okta_login_required
 def logout_view(request):
     logout(request)
-    return HttpResponseRedirect(reverse("login"))
+    return HttpResponseRedirect(reverse("okta_oauth2:login"))
 
 
 def _get_user_by_username(username):
