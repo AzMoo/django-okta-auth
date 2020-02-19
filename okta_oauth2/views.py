@@ -65,63 +65,6 @@ def callback(request):
     return redirect(redirect_url)
 
 
-# @login_required(redirect_field_name=None)
-# @okta_login_required
-# def revocation(request):
-#     # Calls the revocation endpoint for revoking the accessToken
-#     if request.POST:
-
-#         access_token = request.POST.get("accessToken")
-
-#         discovery_doc = DiscoveryDocument(config.issuer).getJson()
-
-#         revocation = call_revocation(discovery_doc["issuer"], access_token, config)
-
-#         if revocation is None:
-#             request.session["revocation"] = "Access Token Revoked"
-#         else:
-#             request.session["revocation"] = json.dumps(revocation, indent=4)
-
-#     return HttpResponseRedirect(reverse("home"))
-
-
-# @login_required(redirect_field_name=None)
-# @okta_login_required
-# def introspect(request):
-#     # Calls the introspect endpoint for checking the accessToken
-
-#     if request.POST:
-
-#         access_token = request.POST.get("accessToken")
-
-#         discovery_doc = DiscoveryDocument(config.issuer).getJson()
-
-#         introspect = call_introspect(discovery_doc["issuer"], access_token, config)
-
-#         if introspect is not None:
-#             request.session["introspect"] = json.dumps(introspect, indent=4)
-
-#     return HttpResponseRedirect(reverse("home"))
-
-
-# @login_required(redirect_field_name=None)
-# @okta_login_required
-# def userinfo(request):
-#     # Calls userInfo endpoint with accessToken
-
-#     if request.POST:
-#         # Build token request
-#         access_token = request.POST.get("accessToken")
-
-#         # Send request
-#         userInfo = call_userinfo_endpoint(config.issuer, access_token)
-
-#         if userInfo is not None:
-#             request.session["userInfo"] = json.dumps(userInfo, indent=4)
-
-#     return HttpResponseRedirect(reverse("home"))
-
-
 @login_required(redirect_field_name=None)
 @okta_login_required
 def logout_view(request):
