@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -70,26 +69,6 @@ def callback(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("okta_oauth2:login"))
-
-
-def _get_user_by_username(username):
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return None
-    return user
-
-
-def _validate_user(claims):
-    # Create user for django session
-    user = _get_user_by_username(claims["email"])
-    if user is None:
-        # Create user
-        user = User.objects.create_user(username=claims["email"], email=claims["email"])
-    else:
-        logger.debug("User exists")
-
-    return user
 
 
 def _delete_cookies(response):
