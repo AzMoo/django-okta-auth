@@ -10,7 +10,7 @@ def okta_login_required(func):
                 response.status_code = 401
                 return response
             else:
-                return HttpResponseRedirect(reverse("login"))
+                return HttpResponseRedirect(reverse("okta_oauth2:login"))
         else:
             return func(request, *args, **kw)
 
