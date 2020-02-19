@@ -5,7 +5,15 @@ import jwt as jwt_python
 import requests
 from jose import jws, jwt
 
-from .models import DiscoveryDocument
+
+class DiscoveryDocument:
+    # Find the OIDC metadata through discovery
+    def __init__(self, issuer_uri):
+        r = requests.get(issuer_uri + "/.well-known/openid-configuration")
+        self.json = r.json()
+
+    def getJson(self):
+        return self.json
 
 
 class TokenValidator(object):

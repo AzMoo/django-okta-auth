@@ -1,16 +1,16 @@
 import json
 import logging
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 
+from . import Config
 from .decorators import okta_login_required
-from .models import Config, TokenManager
-from .tokens import TokenValidator
 
 # GLOBALS
 config = Config()
@@ -55,53 +55,36 @@ def login_view(request):
 
 
 def callback(request):
-    def _token_request(auth_code, nonce):
-        # authorization_code flow. Exchange the auth_code
-        # for id_token and/or access_token
-        user = None
-
-        token_manager = TokenManager()
-        validator = TokenValidator(config)
-        tokens = validator.call_token_endpoint(auth_code)
-
-        if tokens is not None:
-            if "id_token" in tokens:
-                # Perform token validation
-                claims = validator.validate_token(tokens["id_token"], nonce)
-
-                if claims:
-                    token_manager.set_id_token(tokens["id_token"])
-                    token_manager.set_claims(claims)
-                    user = _validate_user(claims)
-
-            if "access_token" in tokens:
-                token_manager.set_access_token(tokens["access_token"])
-
-        return user, token_manager.getJson()
 
     if request.POST:
-        return HttpResponse({"error": "Endpoint not supported"})
-    else:
-        code = request.GET["code"]
-        state = request.GET["state"]
+        return HttpResponseBadRequest("Method not supported")
 
-        # Get state and nonce from cookie
-        cookie_state = request.COOKIES["okta-oauth-state"]
-        cookie_nonce = request.COOKIES["okta-oauth-nonce"]
+    code = request.GET["code"]
+    state = request.GET["state"]
 
-        # Verify state
-        if state != cookie_state:
-            raise Exception("Value {} does not match the assigned state".format(state))
-            return HttpResponseRedirect(reverse("login"))
+    # Get state and nonce from cookie
+    cookie_state = request.COOKIES["okta-oauth-state"]
+    cookie_nonce = request.COOKIES["okta-oauth-nonce"]
 
-        user, token_manager_json = _token_request(code, cookie_nonce)
-        if user is None:
-            return redirect("/login")
-        else:
-            login(request, user)
+    # Verify state
+    if state != cookie_state:
+        return HttpResponseBadRequest(
+            "Value {} does not match the assigned state".format(state)
+        )
 
-        request.session["tokens"] = token_manager_json
-        return redirect("/")
+    user = authenticate(request, auth_code=code, nonce=cookie_nonce)
+
+    if user is None:
+        return redirect(reverse("okta_oauth2:login"))
+
+    login(request, user)
+
+    try:
+        redirect_url = reverse(config.login_redirect_url)
+    except NoReverseMatch:
+        redirect_url = config.login_redirect_url
+
+    return redirect(redirect_url)
 
 
 # @login_required(redirect_field_name=None)
