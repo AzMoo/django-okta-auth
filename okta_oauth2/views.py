@@ -1,6 +1,6 @@
 import logging
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -16,7 +16,7 @@ config = Config()
 logger = logging.getLogger(__name__)
 
 
-def login_view(request):
+def login(request):
     okta_config = {
         "clientId": config.client_id,
         "url": config.org_url,
@@ -54,7 +54,7 @@ def callback(request):
     if user is None:
         return redirect(reverse("okta_oauth2:login"))
 
-    login(request, user)
+    auth_login(request, user)
 
     try:
         redirect_url = reverse(config.login_redirect_url)
@@ -66,8 +66,8 @@ def callback(request):
 
 @login_required(redirect_field_name=None)
 @okta_login_required
-def logout_view(request):
-    logout(request)
+def logout(request):
+    auth_logout(request)
     return HttpResponseRedirect(reverse("okta_oauth2:login"))
 
 
