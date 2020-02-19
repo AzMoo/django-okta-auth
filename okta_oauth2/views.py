@@ -1,4 +1,3 @@
-import json
 import logging
 
 from django.contrib.auth import authenticate, login, logout
@@ -16,27 +15,6 @@ from .decorators import okta_login_required
 config = Config()
 
 logger = logging.getLogger(__name__)
-
-
-def get_context(request):
-    context = {"active": True}
-    if "tokens" in request.session:
-        context["tokens"] = request.session["tokens"]
-        if "claims" in request.session["tokens"]:
-            context["claims"] = json.dumps(
-                request.session["tokens"]["claims"], sort_keys=True, indent=4
-            )
-
-    if "userInfo" in request.session:
-        context["userInfo"] = request.session["userInfo"]
-
-    if "introspect" in request.session:
-        context["introspect"] = request.session["introspect"]
-
-    if "revocation" in request.session:
-        context["revocation"] = request.session["revocation"]
-
-    return context
 
 
 def login_view(request):
