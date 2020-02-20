@@ -3,8 +3,21 @@ import time
 
 import jwt as jwt_python
 import requests
+from django.contrib.auth import get_user_model
 from django.core.cache import caches
 from jose import jws, jwt
+from jose.exceptions import JWTError
+
+from .exceptions import (
+    InvalidClientID,
+    InvalidTokenSignature,
+    IssuerDoesNotMatch,
+    NonceDoesNotMatch,
+    TokenExpired,
+    TokenTooFarAway,
+)
+
+UserModel = get_user_model()
 
 
 class DiscoveryDocument:
@@ -18,14 +31,58 @@ class DiscoveryDocument:
 
 
 class TokenValidator:
-    def __init__(self, config):
+    def __init__(self, config, nonce, request):
         self.config = config
         self.cache = caches[config.cache_alias]
         self.cache_key = "{}-keys".format(config.cache_prefix)
+        self.request = request
+        self.nonce = nonce
 
-    def call_token_endpoint(self, auth_code):
+    def tokens_from_auth_code(self, code):
+        data = {"grant_type": "authorization_code", "code": str(code)}
+
+        result = self.call_token_endpoint(data)
+        return self.handle_token_result(result)
+
+    def tokens_from_refresh_token(self, refresh_token):
+        data = {"grant_type": "refresh_token", "refresh_token": str(refresh_token)}
+
+        result = self.call_token_endpoint(data)
+        return self.handle_token_result(result)
+
+    def handle_token_result(self, token_result):
+        tokens = {}
+
+        if token_result is None or "id_token" not in token_result:
+            return None, tokens
+
+        claims = self.validate_token(token_result["id_token"])
+
+        if claims:
+            tokens["id_token"] = token_result["id_token"]
+            tokens["claims"] = claims
+
+            try:
+                user = UserModel._default_manager.get_by_natural_key(claims["email"])
+            except UserModel.DoesNotExist:
+                user = UserModel._default_manager.create_user(
+                    username=claims["email"], email=claims["email"]
+                )
+
+        if "access_token" in token_result:
+            tokens["access_token"] = token_result["access_token"]
+
+        if "refresh_token" in token_result:
+            tokens["refresh_token"] = token_result["refresh_token"]
+
+        if user:
+            self.request.session["tokens"] = tokens
+
+        return user, tokens
+
+    def call_token_endpoint(self, endpoint_data):
         """ Call /token endpoint
-            Returns accessToken, idToken, or both
+            Returns access_token, id_token, and/or refresh_token
         """
         discovery_doc = DiscoveryDocument(self.config.issuer).getJson()
         token_endpoint = discovery_doc["token_endpoint"]
@@ -40,12 +97,11 @@ class TokenValidator:
         }
 
         data = {
-            "grant_type": self.config.grant_type,
-            "code": str(auth_code),
             "scope": " ".join(self.config.scopes),
             "redirect_uri": self.config.redirect_uri,
         }
 
+        data.update(endpoint_data)
         # Send token request
         r = requests.post(token_endpoint, headers=header, params=data)
         response = r.json()
@@ -57,10 +113,12 @@ class TokenValidator:
                 result["access_token"] = response["access_token"]
             if "id_token" in response:
                 result["id_token"] = response["id_token"]
+            if "refresh_token" in response:
+                result["refresh_token"] = response["refresh_token"]
 
         return result if len(result.keys()) > 0 else None
 
-    def validate_token(self, token, nonce):
+    def validate_token(self, token):
         """
         Validate token
         (Taken from
@@ -118,10 +176,10 @@ class TokenValidator:
                 # Validate the key using jose-jws
                 try:
                     jws.verify(token, key, algorithms=[dirty_alg])
-                except Exception as err:
-                    raise ValueError("Signature is Invalid. {}".format(err))
+                except JWTError as err:
+                    raise InvalidTokenSignature("Invalid token signature") from err
             else:
-                raise ValueError("Unable to fetch public signing key")
+                raise InvalidTokenSignature("Unable to fetch public signing key")
 
             """ Step 2
                 Issuer Identifier for the OpenID Provider (which is typically
@@ -142,10 +200,10 @@ class TokenValidator:
                     Client as a valid audience, or if it contains additional audiences
                     not trusted by the Client.
                 """
-                raise ValueError("Issuer does not match")
+                raise IssuerDoesNotMatch("Issuer does not match")
 
             if decoded_token["aud"] != self.config.client_id:
-                raise ValueError("Audience does not match client_id")
+                raise InvalidClientID("Audience does not match client_id")
 
             """ Step 6 : TLS server validation not implemented by Okta
                 If ID Token is received via direct communication between Client and
@@ -175,8 +233,7 @@ class TokenValidator:
                 """ Step 9
                     The current time MUST be before the time represented by exp
                 """
-
-                raise ValueError("Token has expired")
+                raise TokenExpired
 
             if decoded_token["iat"] < (int(time.time()) - 100000):
                 """ Step 10 - Defined 'too far away time' : approx 24hrs
@@ -184,18 +241,17 @@ class TokenValidator:
                     from current time, limiting the time that nonces need to be stored
                     to prevent attacks.
                 """
+                raise TokenTooFarAway("iat too far in the past ( > 1 day)")
 
-                raise ValueError("iat too far in the past ( > 1 day)")
-
-            if nonce is not None:
+            if self.nonce is not None:
                 """ Step 11
                     If a nonce value is sent in the Authentication Request,
                     a nonce MUST be present and be the same value as the one
                     sent in the Authentication Request. Client SHOULD check for
                     nonce value to prevent replay attacks.
                 """
-                if nonce != decoded_token["nonce"]:
-                    raise ValueError(
+                if self.nonce != decoded_token["nonce"]:
+                    raise NonceDoesNotMatch(
                         "nonce value does not match Authentication Request nonce"
                     )
 
