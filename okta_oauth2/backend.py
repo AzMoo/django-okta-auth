@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
-from . import Config
+from .conf import Config
 from .tokens import TokenValidator
 
 UserModel = get_user_model()

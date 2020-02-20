@@ -1,22 +1,19 @@
 import logging
 
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 
-from . import Config
-from .decorators import okta_login_required
-
-# GLOBALS
-config = Config()
+from .conf import Config
 
 logger = logging.getLogger(__name__)
 
 
 def login(request):
+    config = Config()
+
     okta_config = {
         "clientId": config.client_id,
         "url": config.org_url,
@@ -32,6 +29,7 @@ def login(request):
 
 
 def callback(request):
+    config = Config()
 
     if request.POST:
         return HttpResponseBadRequest("Method not supported")
@@ -64,8 +62,6 @@ def callback(request):
     return redirect(redirect_url)
 
 
-@login_required(redirect_field_name=None)
-@okta_login_required
 def logout(request):
     auth_logout(request)
     return HttpResponseRedirect(reverse("okta_oauth2:login"))

@@ -3,6 +3,7 @@ import time
 
 import jwt as jwt_python
 import requests
+from django.core.cache import caches
 from jose import jws, jwt
 
 
@@ -16,10 +17,11 @@ class DiscoveryDocument:
         return self.json
 
 
-class TokenValidator(object):
-    def __init__(self, config, keys=[]):
+class TokenValidator:
+    def __init__(self, config):
         self.config = config
-        self.keys = keys
+        self.cache = caches[config.cache_alias]
+        self.cache_key = "{}-keys".format(config.cache_prefix)
 
     def call_token_endpoint(self, auth_code):
         """ Call /token endpoint
@@ -74,7 +76,9 @@ class TokenValidator(object):
                 :return: key from jwks_uri having the kid key
             """
 
-            for key in self.keys:
+            cached_keys = self.cache.get(self.cache_key) or []
+
+            for key in cached_keys:
                 if key["kid"] == kid:
                     return key
 
@@ -86,7 +90,10 @@ class TokenValidator(object):
             jwks = r.json()
             for key in jwks["keys"]:
                 if kid == key["kid"]:
-                    self.keys.append(key)
+                    cached_keys.append(key)
+                    self.cache.set(
+                        self.cache_key, cached_keys, self.config.cache_timeout
+                    )
                     return key
 
             return None
