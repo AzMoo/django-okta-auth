@@ -14,6 +14,7 @@ from .exceptions import (
     IssuerDoesNotMatch,
     NonceDoesNotMatch,
     TokenExpired,
+    TokenRequestFailed,
     TokenTooFarAway,
 )
 
@@ -96,10 +97,7 @@ class TokenValidator:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        data = {
-            "scope": " ".join(self.config.scopes),
-            "redirect_uri": self.config.redirect_uri,
-        }
+        data = {"scope": self.config.scopes, "redirect_uri": self.config.redirect_uri}
 
         data.update(endpoint_data)
         # Send token request
@@ -115,6 +113,10 @@ class TokenValidator:
                 result["id_token"] = response["id_token"]
             if "refresh_token" in response:
                 result["refresh_token"] = response["refresh_token"]
+        else:
+            raise TokenRequestFailed(
+                response["error"], response.get("error_description", None)
+            )
 
         return result if len(result.keys()) > 0 else None
 

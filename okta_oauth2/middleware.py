@@ -1,3 +1,5 @@
+import logging
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
@@ -6,6 +8,7 @@ from .exceptions import InvalidToken, TokenExpired
 from .tokens import TokenValidator
 
 config = Config()
+logger = logging.getLogger(__name__)
 
 
 class OktaMiddleware:
@@ -35,19 +38,24 @@ class OktaMiddleware:
             # Take us to the login so we can get some tokens.
             return HttpResponseRedirect(reverse("okta_oauth2:login"))
 
-        validator = TokenValidator(config, request.COOKIES["okta-oauth-nonce"], request)
-
         try:
             try:
+                validator = TokenValidator(
+                    config, request.COOKIES["okta-oauth-nonce"], request
+                )
                 validator.validate_token(request.session["tokens"]["id_token"])
             except TokenExpired:
+                logger.debug("Token has expired.")
                 if "refresh_token" in request.session["tokens"]:
+                    logger.debug("Refresh token available... Refreshing.")
+                    validator = TokenValidator(config, None, request)
                     validator.tokens_from_refresh_token(
                         request.session["tokens"]["refresh_token"]
                     )
                 else:
                     raise InvalidToken
-        except (InvalidToken, KeyError):
+        except (InvalidToken, KeyError) as e:
+            logger.debug("Invalid token: %s", str(e))
             return HttpResponseRedirect(reverse("okta_oauth2:login"))
 
         response = self.get_response(request)

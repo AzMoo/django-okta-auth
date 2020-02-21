@@ -26,4 +26,5 @@ class OktaBackend(ModelBackend):
         validator = TokenValidator(config, nonce, request)
         user, tokens = validator.tokens_from_auth_code(auth_code)
 
-        return user
+        if self.user_can_authenticate(user):
+            return user

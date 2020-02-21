@@ -38,3 +38,9 @@ class NonceDoesNotMatch(InvalidToken):
     """ Token nonce does not match expected nonce """
 
     pass
+
+
+class TokenRequestFailed(Exception):
+    """ The request to the token api endpoint has failed. """
+
+    pass
