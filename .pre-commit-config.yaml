@@ -41,3 +41,4 @@
   hooks:
     - id: python-bandit-vulnerability-check
       args: [--recursive]
+      exclude: tests\/

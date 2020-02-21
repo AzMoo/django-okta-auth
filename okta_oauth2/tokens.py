@@ -78,6 +78,7 @@ class TokenValidator:
 
         if user:
             self.request.session["tokens"] = tokens
+            self.request.session.modified = True
 
         return user, tokens
 

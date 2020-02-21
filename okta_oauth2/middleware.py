@@ -22,6 +22,8 @@ class OktaMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        logger.debug("Entering Okta Middleware")
+
         if self.is_public_url(request.path_info):
             # We don't need tokens for public url's so just do nothing
             return self.get_response(request)
