@@ -5,6 +5,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from okta_oauth2.exceptions import TokenExpired
 from okta_oauth2.middleware import OktaMiddleware
+from okta_oauth2.tests.utils import build_token
 
 rf = RequestFactory()
 
@@ -41,14 +42,17 @@ def test_valid_token_returns_response(mocker):
     If we have a valid token we should be returning the normal
     response from the middleware.
     """
-    # validate_token will raise an exception if it fails, so we're
-    # just replacing it with something that does nothing and pretending
-    # it succeeded. We have to do this because we can't actually validate
-    # a real token because we don't have one.
-    with patch("okta_oauth2.middleware.TokenValidator.validate_token"):
+
+    nonce = "123456"
+    # We're building a token here that we know will be valid
+    token = build_token(nonce=nonce)
+
+    with patch(
+        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+    ):
         request = rf.get("/")
-        request.COOKIES["okta-oauth-nonce"] = "123456"
-        request.session = {"tokens": {"id_token": "imavalidtokenbutnotreallylol"}}
+        request.COOKIES["okta-oauth-nonce"] = nonce
+        request.session = {"tokens": {"id_token": token}}
         mw = OktaMiddleware(Mock(return_value=HttpResponse()))
         response = mw(request)
         assert response.status_code == 200

@@ -121,43 +121,41 @@ class TokenValidator:
 
         return result if len(result.keys()) > 0 else None
 
+    def _jwks(self, kid, issuer):
+        """
+            Internal:
+                Fetch public key from jwks_uri and caches it until the key rotates
+            :param kid: "key Id"
+            :param issuer: issuer uri
+            :return: key from jwks_uri having the kid key
+        """
+
+        cached_keys = self.cache.get(self.cache_key) or []
+
+        for key in cached_keys:
+            if key["kid"] == kid:
+                return key
+
+        # lookup the key from jwks_uri if key is not in cache
+        # Get discovery document
+        r = requests.get(issuer + "/.well-known/openid-configuration")
+        discovery = r.json()
+        r = requests.get(discovery["jwks_uri"])
+        jwks = r.json()
+        for key in jwks["keys"]:
+            if kid == key["kid"]:
+                cached_keys.append(key)
+                self.cache.set(self.cache_key, cached_keys, self.config.cache_timeout)
+                return key
+
+        return None
+
     def validate_token(self, token):
         """
         Validate token
         (Taken from
         http://openid.net/specs/openid-connect-core-1_0.html#TokenResponseValidation)
         """
-
-        def _jwks(kid, issuer):
-            """
-                Internal:
-                    Fetch public key from jwks_uri and caches it until the key rotates
-                :param kid: "key Id"
-                :param issuer: issuer uri
-                :return: key from jwks_uri having the kid key
-            """
-
-            cached_keys = self.cache.get(self.cache_key) or []
-
-            for key in cached_keys:
-                if key["kid"] == kid:
-                    return key
-
-            # lookup the key from jwks_uri if key is not in cache
-            # Get discovery document
-            r = requests.get(issuer + "/.well-known/openid-configuration")
-            discovery = r.json()
-            r = requests.get(discovery["jwks_uri"])
-            jwks = r.json()
-            for key in jwks["keys"]:
-                if kid == key["kid"]:
-                    cached_keys.append(key)
-                    self.cache.set(
-                        self.cache_key, cached_keys, self.config.cache_timeout
-                    )
-                    return key
-
-            return None
 
         try:
             """ Step 1
@@ -174,7 +172,7 @@ class TokenValidator:
             dirty_alg = jwt.get_unverified_header(token)["alg"]
             dirty_kid = jwt.get_unverified_header(token)["kid"]
 
-            key = _jwks(dirty_kid, decoded_token["iss"])
+            key = self._jwks(dirty_kid, decoded_token["iss"])
             if key:
                 # Validate the key using jose-jws
                 try:

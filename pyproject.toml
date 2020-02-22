@@ -12,8 +12,8 @@ packages = [
 python = "^3.6"
 Django = ">=1.11.0"
 requests = "^2.22.0"
-python-jose = "^3.1.0"
 PyJWT = "^1.7.1"
+python-jose = {version = "^3.1.0", extras = ["cryptography"]}
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.0.1"
