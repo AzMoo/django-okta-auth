@@ -244,7 +244,7 @@ class TokenValidator:
                 """
                 raise TokenTooFarAway("iat too far in the past ( > 1 day)")
 
-            if self.nonce is not None:
+            if self.nonce is not None and "nonce" in decoded_token:
                 """ Step 11
                     If a nonce value is sent in the Authentication Request,
                     a nonce MUST be present and be the same value as the one
