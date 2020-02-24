@@ -37,7 +37,7 @@ def test_invalid_token_redirects_to_login():
     assert response.url == reverse("okta_oauth2:login")
 
 
-def test_valid_token_returns_response(mocker):
+def test_valid_token_returns_response():
     """
     If we have a valid token we should be returning the normal
     response from the middleware.
