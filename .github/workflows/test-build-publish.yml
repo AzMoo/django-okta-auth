@@ -1,4 +1,4 @@
-name: Run Application Tests
+name: Test, Build and Publish (on tags)
 
 on: [push]
 
