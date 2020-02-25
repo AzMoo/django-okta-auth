@@ -32,6 +32,7 @@ jobs:
       name: Publish the built distribution
       runs-on: ubuntu-latest
       if: startsWith(github.event.ref, 'refs/tags')
+      needs: build
       steps:
         - uses: actions/checkout@v2
         - name: Set up Python 3.7
