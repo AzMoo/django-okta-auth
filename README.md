@@ -7,6 +7,8 @@ The library provides a set of views for login, logout and callback, an auth back
 
 It's heavily influenced by [okta-django-samples](https://github.com/zeekhoo-okta/okta-django-samples) but there's a few fundamental changes and further implementation of things like refresh tokens which weren't initially implemented.
 
+This project is in no way affiliated with Okta.
+
 ## Installation
 
 Install from PyPI:
