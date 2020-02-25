@@ -21,7 +21,7 @@ def login(request):
         "scope": config.scopes,
         "issuer": config.issuer,
     }
-    response = render(request, "login.html", {"config": okta_config})
+    response = render(request, "okta_oauth2/login.html", {"config": okta_config})
 
     _delete_cookies(response)
 

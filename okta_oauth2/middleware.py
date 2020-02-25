@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 class OktaMiddleware:
     """
     Middleware to validate JWT tokens set by Okta for authentication.
-
-
     """
 
     def __init__(self, get_response):
