@@ -1,0 +1,3 @@
+[run]
+omit = okta_oauth2/tests/*
+source = okta_oauth2

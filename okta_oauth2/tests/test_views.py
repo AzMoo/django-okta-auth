@@ -1,3 +1,6 @@
+from http.cookies import SimpleCookie
+from unittest.mock import Mock, patch
+
 from django.test import Client
 from django.urls import reverse
 
@@ -67,5 +70,110 @@ def test_callback_redirects_on_error(settings):
         },
     )
 
+    assert response.status_code == 302
+    assert response.url == reverse("okta_oauth2:login")
+
+
+def test_callback_success(settings, django_user_model):
+    """
+    the callback method should authenticate successfully with
+    an auth_code and nonce. We have to fake this because we can't hit
+    okta with a fake auth code.
+    """
+
+    settings.MIDDLEWARE = ("django.contrib.sessions.middleware.SessionMiddleware",)
+
+    nonce = "123456"
+
+    user = django_user_model.objects.create_user("testuser", "testuser@example.com")
+
+    with patch(
+        "okta_oauth2.backend.TokenValidator.tokens_from_auth_code",
+        Mock(return_value=(user, None)),
+    ):
+        c = Client()
+
+        c.cookies = SimpleCookie(
+            {"okta-oauth-state": "cookie-state", "okta-oauth-nonce": nonce}
+        )
+
+        response = c.get(
+            reverse("okta_oauth2:callback"), {"code": "123456", "state": "cookie-state"}
+        )
+
+        assert response.status_code == 302
+        assert response.url == "/"
+
+
+def test_login_view(client):
+    response = client.get(reverse("okta_oauth2:login"))
+    assert response.status_code == 200
+    assert "config" in response.context
+
+
+def test_login_view_deletes_cookies(client):
+    client.cookies = SimpleCookie(
+        {"okta-oauth-state": "cookie-state", "okta-oauth-nonce": "123456"}
+    )
+
+    response = client.get(reverse("okta_oauth2:login"))
+
+    assert response.status_code == 200
+    assert response.cookies["okta-oauth-state"].value == ""
+    assert (
+        response.cookies["okta-oauth-state"]["expires"]
+        == "Thu, 01 Jan 1970 00:00:00 GMT"
+    )
+    assert response.cookies["okta-oauth-nonce"].value == ""
+    assert (
+        response.cookies["okta-oauth-nonce"]["expires"]
+        == "Thu, 01 Jan 1970 00:00:00 GMT"
+    )
+
+
+def test_callback_rejects_post(client):
+    response = client.post(reverse("okta_oauth2:callback"))
+    assert response.status_code == 400
+
+
+def test_invalid_states_is_a_bad_request(client):
+    client.cookies = SimpleCookie(
+        {"okta-oauth-state": "cookie-state", "okta-oauth-nonce": "nonce"}
+    )
+
+    response = client.get(
+        reverse("okta_oauth2:callback"), {"code": "123456", "state": "wrong-state"}
+    )
+
+    assert response.status_code == 400
+
+
+def test_failed_authentication_redirects_to_login(client, settings, django_user_model):
+    settings.MIDDLEWARE = ("django.contrib.sessions.middleware.SessionMiddleware",)
+
+    nonce = "123456"
+
+    # Creating a user to make sure there's actually one that *could* be returned.
+    django_user_model.objects.create_user("testuser", "testuser@example.com")
+
+    with patch("okta_oauth2.views.authenticate", Mock(return_value=None)):
+        c = Client()
+
+        c.cookies = SimpleCookie(
+            {"okta-oauth-state": "cookie-state", "okta-oauth-nonce": nonce}
+        )
+
+        response = c.get(
+            reverse("okta_oauth2:callback"), {"code": "123456", "state": "cookie-state"}
+        )
+
+        assert response.status_code == 302
+        assert response.url == reverse("okta_oauth2:login")
+
+
+def test_logout_view_returns_200(client, settings):
+    settings.MIDDLEWARE = ("django.contrib.sessions.middleware.SessionMiddleware",)
+
+    response = client.get(reverse("okta_oauth2:logout"))
     assert response.status_code == 302
     assert response.url == reverse("okta_oauth2:login")

@@ -8,6 +8,7 @@ def test_view(request):
 
 urlpatterns = [
     path("", test_view),
+    path("named/", test_view, name="named-url"),
     path(
         "accounts/",
         include(("okta_oauth2.urls", "okta_oauth2"), namespace="okta_oauth2"),

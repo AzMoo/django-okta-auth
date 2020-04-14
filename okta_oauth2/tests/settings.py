@@ -1,3 +1,5 @@
+import os
+
 SECRET_KEY = "imasecretlol"
 
 DATABASES = {"default": {"NAME": "test.db", "ENGINE": "django.db.backends.sqlite3"}}
@@ -20,3 +22,23 @@ OKTA_AUTH = {
 }
 
 ROOT_URLCONF = "okta_oauth2.tests.urls"
+
+AUTHENTICATION_BACKENDS = ("okta_oauth2.backend.OktaBackend",)
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "APP_DIRS": True,
+        "DIRS": [os.path.join(os.path.dirname(__file__), "templates"),],
+        "OPTIONS": {
+            "context_processors": [
+                # Django builtin
+                "django.template.context_processors.debug",
+                "django.template.context_processors.media",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
+        },
+    },
+]

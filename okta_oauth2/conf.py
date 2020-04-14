@@ -18,6 +18,7 @@ class Config:
         try:
             # Configuration object
             self.org_url = settings.OKTA_AUTH["ORG_URL"]
+            self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", None)
 
             # OpenID Specific
             self.client_id = settings.OKTA_AUTH["CLIENT_ID"]

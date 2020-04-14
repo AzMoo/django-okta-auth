@@ -7,7 +7,6 @@ from .conf import Config
 from .exceptions import InvalidToken, TokenExpired
 from .tokens import TokenValidator
 
-config = Config()
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +16,7 @@ class OktaMiddleware:
     """
 
     def __init__(self, get_response):
+        self.config = Config()
         self.get_response = get_response
 
     def __call__(self, request):
@@ -41,14 +41,14 @@ class OktaMiddleware:
         try:
             try:
                 validator = TokenValidator(
-                    config, request.COOKIES["okta-oauth-nonce"], request
+                    self.config, request.COOKIES["okta-oauth-nonce"], request
                 )
                 validator.validate_token(request.session["tokens"]["id_token"])
             except TokenExpired:
                 logger.debug("Token has expired.")
                 if "refresh_token" in request.session["tokens"]:
                     logger.debug("Refresh token available... Refreshing.")
-                    validator = TokenValidator(config, None, request)
+                    validator = TokenValidator(self.config, None, request)
                     validator.tokens_from_refresh_token(
                         request.session["tokens"]["refresh_token"]
                     )
@@ -63,4 +63,4 @@ class OktaMiddleware:
         return response
 
     def is_public_url(self, url):
-        return any(public_url.match(url) for public_url in config.public_urls)
+        return any(public_url.match(url) for public_url in self.config.public_urls)

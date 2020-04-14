@@ -37,7 +37,7 @@ def login(request):
 def callback(request):
     config = Config()
 
-    if request.POST:
+    if request.method == "POST":
         return HttpResponseBadRequest("Method not supported")
 
     if "error" in request.GET:
@@ -86,6 +86,6 @@ def logout(request):
 def _delete_cookies(response):
     # The Okta Signin Widget/Javascript SDK aka "Auth-JS" automatically generates
     # state and nonce and stores them in cookies. Delete authJS/widget cookies
-    response.set_cookie("okta-oauth-state", "", max_age=1)
-    response.set_cookie("okta-oauth-nonce", "", max_age=1)
-    response.set_cookie("okta-oauth-redirect-params", "", max_age=1)
+    response.delete_cookie("okta-oauth-state")
+    response.delete_cookie("okta-oauth-nonce")
+    response.delete_cookie("okta-oauth-redirect-params")
