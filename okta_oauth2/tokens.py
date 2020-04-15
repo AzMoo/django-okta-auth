@@ -63,8 +63,7 @@ class TokenValidator:
 
     def manage_groups(self, user, groups):
         for group in groups:
-            group = Group(name=group)
-            group.save()
+            group, _ = Group.objects.get_or_create(name=group)
             user.groups.add(group)
 
         removed_groups = user.groups.filter(~Q(name__in=groups))
