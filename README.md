@@ -143,47 +143,57 @@ A minimal template for the login could be:
 
 ***ORG_URL***:
 
-URL Okta provides for your organization account. This is the URL that you log in to for the admin panel, minus the `-admin`. eg, if your admin URL is https://myorg-admin.okta.com/ then your `ORG_URL` should be: https://myorg.okta.com/
+*str*. URL Okta provides for your organization account. This is the URL that you log in to for the admin panel, minus the `-admin`. eg, if your admin URL is https://myorg-admin.okta.com/ then your `ORG_URL` should be: https://myorg.okta.com/
 
 ***ISSUER***
 
-This is the URL for your Authorization Server. If you're using the default authorization server then this will be: `https://{ORG_URL}/oauth2/default`
+*str*. This is the URL for your Authorization Server. If you're using the default authorization server then this will be: `https://{ORG_URL}/oauth2/default`
 
 ***CLIENT_ID***
 
-The Client ID provided by your Okta Application.
+*str*. The Client ID provided by your Okta Application.
 
 ***CLIENT_SECRET***
 
-The Client Secret provided by your Okta Application.
+*str*. The Client Secret provided by your Okta Application.
 
 ***SCOPES***
 
-The scopes requested from the OpenID Authorization server. At the very least this needs to be `"openid profile email"` but if you want to use refresh tokens you will need `"openid profile email offline_access"`. This is the default.
+*str*. The scopes requested from the OpenID Authorization server. At the very least this needs to be `"openid profile email"` but if you want to use refresh tokens you will need `"openid profile email offline_access"`. This is the default.
+
+If you want Okta to manage your groups then you should also include `groups` in your scopes.
 
 ***REDIRECT_URI***
 
-This is the URL to the `callback` view that the okta Sign-In Widget will redirect the browser to after the username and password have been authorized. If the directions in the `urls.py` section of the documentation were followed and your django server is running on `localhost:8000` then this will be: http://localhost:8000/accounts/callback/
+*str*. This is the URL to the `callback` view that the okta Sign-In Widget will redirect the browser to after the username and password have been authorized. If the directions in the `urls.py` section of the documentation were followed and your django server is running on `localhost:8000` then this will be: http://localhost:8000/accounts/callback/
 
 ***LOGIN_REDIRECT_URL***
 
-This is the URL to redirect to from the `callback` after a successful login. Defaults to `/`.
+*str*. This is the URL to redirect to from the `callback` after a successful login. Defaults to `/`.
 
 ***CACHE_PREFIX***
 
-The application will utilise the django cache to store public keys requested from Okta in an effort to minimise network round-trips and speed up authorization. This setting will control the prefix for the cache keys. Defaults to `okta`.
+*str*. The application will utilise the django cache to store public keys requested from Okta in an effort to minimise network round-trips and speed up authorization. This setting will control the prefix for the cache keys. Defaults to `okta`.
 
 ***CACHE_ALIAS***
 
-Specify which django cache should be utilised for storing public keys. Defaults to `default`.
+*str*. Specify which django cache should be utilised for storing public keys. Defaults to `default`.
 
 ***PUBLIC_NAMED_URLS***
 
-A list or tuple of URL names that should be accessible without tokens. If you add a URL in this setting the middleware won't check for tokens. Default is: `[]`
+*List[str]*. A list or tuple of URL names that should be accessible without tokens. If you add a URL in this setting the middleware won't check for tokens. Default is: `[]`
 
 ***PUBLIC_URLS***
 
-A list or tuple of URL regular expressions that should be accessible without tokens. If you add a regex in this setting the middleware won't check matching paths for tokens. Default is `[]`.
+*List[str]*. A list or tuple of URL regular expressions that should be accessible without tokens. If you add a regex in this setting the middleware won't check matching paths for tokens. Default is `[]`.
+
+***SUPERUSER_GROUP***
+
+*str*. Members of this group will be created with the django `is_staff` and `is_superuser` flags set.
+
+***MANAGE_GROUPS***
+
+*bool*. If true the authentication backend will manage django groups for you.
 
 ## License
 
