@@ -459,3 +459,36 @@ def test_existing_user_is_escalated_to_superuser_group(rf, settings, django_user
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
         assert user.is_superuser
+
+
+@pytest.mark.django_db
+def test_existing_superuser_is_deescalated_from_superuser_group(
+    rf, settings, django_user_model
+):
+    """
+    If an existing user is added to a superuser group they should
+    be escalated to a superuser.
+    """
+    settings.OKTA_AUTH = update_okta_settings(
+        settings.OKTA_AUTH, "SUPERUSER_GROUP", SUPERUSER_GROUP
+    )
+
+    user = django_user_model._default_manager.create_user(
+        username="fakemail@notreal.com",
+        email="fakemail@notreal.com",
+        is_staff=True,
+        is_superuser=True,
+    )
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_normal_user_with_groups_token,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        assert isinstance(user, django_user_model)
+        assert user.is_superuser is False

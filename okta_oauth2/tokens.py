@@ -99,6 +99,10 @@ class TokenValidator:
                 user.is_staff = True
                 user.is_superuser = True
                 user.save()
+            else:
+                user.is_staff = False
+                user.is_superuser = False
+                user.save()
 
             if self.config.manage_groups:
                 self.manage_groups(user, claims["groups"])
