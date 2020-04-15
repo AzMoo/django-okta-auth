@@ -4,7 +4,9 @@ import time
 import jwt as jwt_python
 import requests
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.cache import caches
+from django.db.models import Q
 from jose import jws, jwt
 from jose.exceptions import JWSError, JWTError
 
@@ -59,6 +61,17 @@ class TokenValidator:
         result = self.call_token_endpoint(data)
         return self.handle_token_result(result)
 
+    def manage_groups(self, user, groups):
+        for group in groups:
+            group = Group(name=group)
+            group.save()
+            user.groups.add(group)
+
+        removed_groups = user.groups.filter(~Q(name__in=groups))
+
+        for group in removed_groups:
+            user.groups.remove(group)
+
     def handle_token_result(self, token_result):
         tokens = {}
 
@@ -89,6 +102,9 @@ class TokenValidator:
                     user = UserModel._default_manager.create_user(
                         username=claims["email"], email=claims["email"]
                     )
+
+            if self.config.manage_groups:
+                self.manage_groups(user, claims["groups"])
 
         if "access_token" in token_result:
             tokens["access_token"] = token_result["access_token"]

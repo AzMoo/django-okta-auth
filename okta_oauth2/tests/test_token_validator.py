@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from django.contrib.auth.models import Group
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import caches
 from django.utils.timezone import now
@@ -64,6 +65,14 @@ def get_superuser_token_result(self, code):
     return {
         "access_token": build_access_token(),
         "id_token": build_id_token(groups=[SUPERUSER_GROUP]),
+        "refresh_token": "refresh",
+    }
+
+
+def get_normal_user_with_groups_token(self, code):
+    return {
+        "access_token": build_access_token(),
+        "id_token": build_id_token(groups=["one", "two"]),
         "refresh_token": "refresh",
     }
 
@@ -368,3 +377,57 @@ def test_unmatching_nonce_raises_error(rf):
     ), pytest.raises(NonceDoesNotMatch):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
+
+
+@pytest.mark.django_db
+def test_groups_are_created_and_user_added(rf, settings, django_user_model):
+    """
+    If MANAGE_GROUPS is true the groups should be created and the user
+    should be added to them.
+    """
+    settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "MANAGE_GROUPS", True)
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_normal_user_with_groups_token,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+
+        groups = Group.objects.all()
+        assert [("one",), ("two",)] == list(groups.values_list("name"))
+        assert list(user.groups.all()) == list(Group.objects.all())
+
+
+@pytest.mark.django_db
+def test_user_is_removed_from_groups(rf, settings, django_user_model):
+    """
+    When MANAGE_GROUPS is true a user should be removed from a
+    group if it's not included in the token response.
+    """
+    settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "MANAGE_GROUPS", True)
+
+    user = django_user_model._default_manager.create_user(
+        username="fakemail@notreal.com", email="fakemail@notreal.com"
+    )
+    group = Group.objects.create(name="test-group")
+
+    user.groups.add(group)
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_normal_user_with_groups_token,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+
+        groups = user.groups.all()
+        assert [("one",), ("two",)] == list(groups.values_list("name"))
