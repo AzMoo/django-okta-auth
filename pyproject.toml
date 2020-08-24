@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "django-okta-auth"
-version = "0.5.2"
+version = "0.5.3"
 description = "Django Authentication for Okta OpenID"
 authors = ["Matt Magin <matt.magin@cmv.com.au>"]
 license = "MIT"
 packages = [
     {include = "okta_oauth2"}
 ]
+readme = "README.md"
+homepage = "https://github.com/AzMoo/django-okta-auth"
+repository = "https://github.com/AzMoo/django-okta-auth"
 
 [tool.poetry.dependencies]
 python = "^3.6"
