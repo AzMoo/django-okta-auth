@@ -1,4 +1,5 @@
 import base64
+import logging
 import time
 
 import jwt as jwt_python
@@ -7,13 +8,17 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import caches
 from django.db.models import Q
+from django.http import HttpRequest
 from jose import jws, jwt
 from jose.exceptions import JWSError, JWTError
 
+from .conf import Config
 from .exceptions import (
     InvalidClientID,
+    InvalidToken,
     InvalidTokenSignature,
     IssuerDoesNotMatch,
+    MissingAuthTokens,
     NonceDoesNotMatch,
     TokenExpired,
     TokenRequestFailed,
@@ -21,6 +26,8 @@ from .exceptions import (
 )
 
 UserModel = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 class DiscoveryDocument:
@@ -119,8 +126,8 @@ class TokenValidator:
         return user, tokens
 
     def call_token_endpoint(self, endpoint_data):
-        """ Call /token endpoint
-            Returns access_token, id_token, and/or refresh_token
+        """Call /token endpoint
+        Returns access_token, id_token, and/or refresh_token
         """
         discovery_doc = self.discovery_document.getJson()
         token_endpoint = discovery_doc["token_endpoint"]
@@ -164,10 +171,10 @@ class TokenValidator:
 
     def _jwks(self, kid):
         """
-            Internal:
-                Fetch public key from jwks_uri and caches it until the key rotates
-            :param kid: "key Id"
-            :return: key from jwks_uri having the kid key
+        Internal:
+            Fetch public key from jwks_uri and caches it until the key rotates
+        :param kid: "key Id"
+        :return: key from jwks_uri having the kid key
         """
 
         cached_keys = self.cache.get(self.cache_key) or []
@@ -227,15 +234,15 @@ class TokenValidator:
         """
 
         if decoded_token["iss"] != self.config.issuer:
-            """ Step 3
-                Client MUST validate:
-                    aud (audience) contains the same `client_id` registered
-                    iss (issuer) identified as the aud (audience)
-                    aud (audience) Claim MAY contain an array with more than one
-                    element (Currently NOT IMPLEMENTED by Okta)
-                The ID Token MUST be rejected if the ID Token does not list the
-                Client as a valid audience, or if it contains additional audiences
-                not trusted by the Client.
+            """Step 3
+            Client MUST validate:
+                aud (audience) contains the same `client_id` registered
+                iss (issuer) identified as the aud (audience)
+                aud (audience) Claim MAY contain an array with more than one
+                element (Currently NOT IMPLEMENTED by Okta)
+            The ID Token MUST be rejected if the ID Token does not list the
+            Client as a valid audience, or if it contains additional audiences
+            not trusted by the Client.
             """
             raise IssuerDoesNotMatch("Issuer does not match")
 
@@ -267,25 +274,25 @@ class TokenValidator:
         """
 
         if decoded_token["exp"] < int(time.time()):
-            """ Step 9
-                The current time MUST be before the time represented by exp
+            """Step 9
+            The current time MUST be before the time represented by exp
             """
             raise TokenExpired
 
         if decoded_token["iat"] < (int(time.time()) - 100000):
-            """ Step 10 - Defined 'too far away time' : approx 24hrs
-                The iat can be used to reject tokens that were issued too far away
-                from current time, limiting the time that nonces need to be stored
-                to prevent attacks.
+            """Step 10 - Defined 'too far away time' : approx 24hrs
+            The iat can be used to reject tokens that were issued too far away
+            from current time, limiting the time that nonces need to be stored
+            to prevent attacks.
             """
             raise TokenTooFarAway("iat too far in the past ( > 1 day)")
 
         if self.nonce is not None and "nonce" in decoded_token:
-            """ Step 11
-                If a nonce value is sent in the Authentication Request,
-                a nonce MUST be present and be the same value as the one
-                sent in the Authentication Request. Client SHOULD check for
-                nonce value to prevent replay attacks.
+            """Step 11
+            If a nonce value is sent in the Authentication Request,
+            a nonce MUST be present and be the same value as the one
+            sent in the Authentication Request. Client SHOULD check for
+            nonce value to prevent replay attacks.
             """
             if self.nonce != decoded_token["nonce"]:
                 raise NonceDoesNotMatch(
@@ -307,3 +314,39 @@ class TokenValidator:
         """
 
         return decoded_token
+
+
+def validate_tokens(config: Config, request: HttpRequest):
+    """
+    Take a config and a request and validate the auth tokens
+    that are in the session.
+
+    Raises an InvalidToken error if there's something wrong with the
+    token, or a django ImproperlyConfigured exception if there's
+    something wrong with the configuration.
+    """
+    if "tokens" not in request.session or "id_token" not in request.session["tokens"]:
+        # There must be an id token in the session to validate against.
+        raise MissingAuthTokens("Tokens missing from the session")
+
+    try:
+        nonce = request.COOKIES["okta-oauth-nonce"]
+    except KeyError:
+        # If we don't have a nonce in the cookie then we can't
+        # validate the token, so just raise an invalid token here.
+        raise InvalidToken("Missing nonce in cookie")
+
+    try:
+        validator = TokenValidator(config, nonce, request)
+        # If we don't raise an exception we assume that we've got a valid token
+        validator.validate_token(request.session["tokens"]["id_token"])
+    except TokenExpired:
+        # Check for a refresh token, to refresh the authentication automatically.
+        if "refresh_token" in request.session["tokens"]:
+            validator = TokenValidator(config, None, request)
+            # If we don't raise an exception we assume that we've got a valid token
+            validator.tokens_from_refresh_token(
+                request.session["tokens"]["refresh_token"]
+            )
+        else:
+            raise InvalidToken("Token has expired and no refresh token available")

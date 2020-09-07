@@ -4,8 +4,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
 from .conf import Config
-from .exceptions import InvalidToken, TokenExpired
-from .tokens import TokenValidator
+from .exceptions import InvalidToken, MissingAuthTokens
+from .tokens import validate_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,9 @@ class OktaMiddleware:
             # We don't need tokens for public url's so just do nothing
             return self.get_response(request)
 
-        if "tokens" not in request.session:
+        try:
+            validate_tokens(self.config, request)
+        except MissingAuthTokens:
             # If we don't have any tokens then we want to just deny straight
             # up. We should always have tokens in the session when we're not
             # requesting a public view.
@@ -37,24 +39,7 @@ class OktaMiddleware:
                 return response
             # Take us to the login so we can get some tokens.
             return HttpResponseRedirect(reverse("okta_oauth2:login"))
-
-        try:
-            try:
-                validator = TokenValidator(
-                    self.config, request.COOKIES["okta-oauth-nonce"], request
-                )
-                validator.validate_token(request.session["tokens"]["id_token"])
-            except TokenExpired:
-                logger.debug("Token has expired.")
-                if "refresh_token" in request.session["tokens"]:
-                    logger.debug("Refresh token available... Refreshing.")
-                    validator = TokenValidator(self.config, None, request)
-                    validator.tokens_from_refresh_token(
-                        request.session["tokens"]["refresh_token"]
-                    )
-                else:
-                    raise InvalidToken
-        except (InvalidToken, KeyError) as e:
+        except InvalidToken as e:
             logger.debug("Invalid token: %s", str(e))
             return HttpResponseRedirect(reverse("okta_oauth2:login"))
 

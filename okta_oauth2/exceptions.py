@@ -1,5 +1,13 @@
-class InvalidToken(Exception):
+class DjangoOktaAuthException(Exception):
+    pass
+
+
+class InvalidToken(DjangoOktaAuthException):
     """ Base exception for an invalid token """
+
+    def __init__(self, message=None):
+        if message:
+            self.message = message
 
     pass
 
@@ -40,7 +48,11 @@ class NonceDoesNotMatch(InvalidToken):
     pass
 
 
-class TokenRequestFailed(Exception):
+class TokenRequestFailed(DjangoOktaAuthException):
     """ The request to the token api endpoint has failed. """
 
+    pass
+
+
+class MissingAuthTokens(DjangoOktaAuthException):
     pass
