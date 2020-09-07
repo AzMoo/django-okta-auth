@@ -3,7 +3,7 @@
 ## Overview
 Django Okta Auth is a library that acts as a client for the Okta OpenID Connect provider.
 
-The library provides a set of views for login, logout and callback, an auth backend for authentication, and a middleware for token verification in requests.
+The library provides a set of views for login, logout and callback, an auth backend for authentication, a middleware for token verification in requests, and a decorator that can be selectively applied to individual views.
 
 It's heavily influenced by [okta-django-samples](https://github.com/zeekhoo-okta/okta-django-samples) but there's a few fundamental changes and further implementation of things like refresh tokens which weren't initially implemented.
 
@@ -35,9 +35,11 @@ The Authentication Backend should be configured as so:
 
     AUTHENTICATION_BACKENDS = ("okta_oauth2.backend.OktaBackend",)
 
-### Middleware
+### Using the middleware
 
-If you wish to check for valid tokens on every request and refresh tokens automatically when they expire (you should), then you will need to install the provided middleware. Order of middleware is important and the `OktaMiddleware` must be below the `SessionMiddleware` and `AuthenticationMiddleware` to ensure that the session and the user are both on the request:
+You can use the middleware to check for valid tokens during ever refresh and automatically refresh tokens when they expire. By using the middleware you are defaulting to requiring authentication on all your views unless they have been marked as public in `PUBLIC_NAMED_URLS` or `PUBLIC_URLS`.
+
+The order of middleware is important and the `OktaMiddleware` must be below the `SessionMiddleware` and `AuthenticationMiddleware` to ensure that the session and the user are both on the request:
 
     MIDDLEWARE = (
         'django.middleware.security.SecurityMiddleware',
@@ -49,6 +51,18 @@ If you wish to check for valid tokens on every request and refresh tokens automa
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
         'okta_oauth2.middleware.OktaMiddleware'
     )
+
+### Using the decorator
+
+The alternative to using the middleware is to selectively apply the `okta_oauth2.decorators.okta_login_required` decorator to views you wish to protect. When the view is accessed the decorator will check that valid tokens exist on the session, and if they don't then it will redirect to the login.
+
+The decorator is applied to a view like so:
+
+    from okta_oauth2.decorators import okta_login_required
+
+    @okta_login_required
+    def decorated_view(request):
+        return HttpResponse("i am a protected view")
 
 ### Update urls<span></span>.py
 
