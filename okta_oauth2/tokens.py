@@ -374,3 +374,4 @@ def validate_or_redirect(
         return HttpResponseRedirect(reverse("okta_oauth2:login"))
     except InvalidToken:
         return HttpResponseRedirect(reverse("okta_oauth2:login"))
+    return None
