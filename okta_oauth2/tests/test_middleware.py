@@ -44,9 +44,7 @@ def test_valid_token_returns_response(rf):
     # We're building a token here that we know will be valid
     token = build_id_token(nonce=nonce)
 
-    with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
-    ):
+    with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = nonce
         request.session = {"tokens": {"id_token": token}}
@@ -64,8 +62,8 @@ def test_token_expired_triggers_refresh(rf):
     raises_token_expired.side_effect = TokenExpired
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator.validate_token", raises_token_expired
-    ), patch("okta_oauth2.middleware.TokenValidator.tokens_from_refresh_token"):
+        "okta_oauth2.tokens.TokenValidator.validate_token", raises_token_expired
+    ), patch("okta_oauth2.tokens.TokenValidator.tokens_from_refresh_token"):
 
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = "123456"
@@ -91,8 +89,8 @@ def test_token_expired_triggers_refresh_with_no_refresh(rf):
     raises_token_expired.side_effect = TokenExpired
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator.validate_token", raises_token_expired
-    ), patch("okta_oauth2.middleware.TokenValidator.tokens_from_refresh_token"):
+        "okta_oauth2.tokens.TokenValidator.validate_token", raises_token_expired
+    ), patch("okta_oauth2.tokens.TokenValidator.tokens_from_refresh_token"):
 
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = "123456"

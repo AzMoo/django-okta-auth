@@ -1,6 +1,7 @@
 import base64
 import logging
 import time
+from typing import Optional
 
 import jwt as jwt_python
 import requests
@@ -8,7 +9,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import caches
 from django.db.models import Q
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from jose import jws, jwt
 from jose.exceptions import JWSError, JWTError
 
@@ -350,3 +352,25 @@ def validate_tokens(config: Config, request: HttpRequest):
             )
         else:
             raise InvalidToken("Token has expired and no refresh token available")
+
+
+def validate_or_redirect(
+    config: Config, request: HttpRequest
+) -> Optional[HttpResponse]:
+    """Take a config and a request. If tokens dont' validate,
+    return the appropriate HttpResponse, otherwise return None"""
+    try:
+        validate_tokens(config, request)
+    except MissingAuthTokens:
+        # If we don't have any tokens then we want to just deny straight
+        # up. We should always have tokens in the session when we're not
+        # requesting a public view.
+        if request.method == "POST":
+            # Posting shouldn't redirect, it should just say no.
+            response = HttpResponse()
+            response.status_code = 401
+            return response
+        # Take us to the login so we can get some tokens.
+        return HttpResponseRedirect(reverse("okta_oauth2:login"))
+    except InvalidToken:
+        return HttpResponseRedirect(reverse("okta_oauth2:login"))

@@ -1,11 +1,7 @@
 import logging
 
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-
 from .conf import Config
-from .exceptions import InvalidToken, MissingAuthTokens
-from .tokens import validate_tokens
+from .tokens import validate_or_redirect
 
 logger = logging.getLogger(__name__)
 
@@ -26,26 +22,12 @@ class OktaMiddleware:
             # We don't need tokens for public url's so just do nothing
             return self.get_response(request)
 
-        try:
-            validate_tokens(self.config, request)
-        except MissingAuthTokens:
-            # If we don't have any tokens then we want to just deny straight
-            # up. We should always have tokens in the session when we're not
-            # requesting a public view.
-            if request.method == "POST":
-                # Posting shouldn't redirect, it should just say no.
-                response = HttpResponse()
-                response.status_code = 401
-                return response
-            # Take us to the login so we can get some tokens.
-            return HttpResponseRedirect(reverse("okta_oauth2:login"))
-        except InvalidToken as e:
-            logger.debug("Invalid token: %s", str(e))
-            return HttpResponseRedirect(reverse("okta_oauth2:login"))
+        redirect_response = validate_or_redirect(self.config, request)
 
-        response = self.get_response(request)
+        if redirect_response:
+            return redirect_response
 
-        return response
+        return self.get_response(request)
 
     def is_public_url(self, url):
         return any(public_url.match(url) for public_url in self.config.public_urls)

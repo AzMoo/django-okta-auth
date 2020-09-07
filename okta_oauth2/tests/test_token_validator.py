@@ -274,9 +274,7 @@ def test_validate_token_successfully_validates(rf):
     """ A valid token should return the decoded token. """
     token = build_id_token()
     c = Config()
-    with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
-    ):
+    with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         decoded_token = tv.validate_token(token)
         assert decoded_token["jti"] == "randomid"
@@ -289,7 +287,7 @@ def test_wrong_key_raises_invalid_token(rf):
     token = build_id_token()
     c = Config()
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="wrongkey")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="wrongkey")
     ), pytest.raises(InvalidTokenSignature):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -302,7 +300,7 @@ def test_no_key_raises_invalid_token(rf):
     token = build_id_token()
     c = Config()
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value=None)
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=None)
     ), pytest.raises(InvalidTokenSignature):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -316,7 +314,7 @@ def test_invalid_issuer_in_decoded_token(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
     ), pytest.raises(IssuerDoesNotMatch):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -330,7 +328,7 @@ def test_invalid_audience_in_decoded_token(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
     ), pytest.raises(InvalidClientID):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -344,7 +342,7 @@ def test_expired_token_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
     ), pytest.raises(TokenExpired):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -359,7 +357,7 @@ def test_issue_time_is_too_far_in_the_past_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
     ), pytest.raises(TokenTooFarAway):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -373,7 +371,7 @@ def test_unmatching_nonce_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.middleware.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
     ), pytest.raises(NonceDoesNotMatch):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
