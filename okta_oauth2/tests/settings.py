@@ -25,11 +25,24 @@ ROOT_URLCONF = "okta_oauth2.tests.urls"
 
 AUTHENTICATION_BACKENDS = ("okta_oauth2.backend.OktaBackend",)
 
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "APP_DIRS": True,
-        "DIRS": [os.path.join(os.path.dirname(__file__), "templates"),],
+        "DIRS": [
+            os.path.join(os.path.dirname(__file__), "templates"),
+        ],
         "OPTIONS": {
             "context_processors": [
                 # Django builtin

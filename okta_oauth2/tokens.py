@@ -212,7 +212,10 @@ class TokenValidator:
             Skipping Okta has not implemented encrypted JWT
         """
 
-        decoded_token = jwt_python.decode(token, verify=False)
+        try:
+            decoded_token = jwt_python.decode(token, verify=False)
+        except jwt_python.exceptions.DecodeError:
+            raise InvalidToken("Unable to decode jwt")
 
         dirty_alg = jwt.get_unverified_header(token)["alg"]
         dirty_kid = jwt.get_unverified_header(token)["kid"]
