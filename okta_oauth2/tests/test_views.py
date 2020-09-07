@@ -1,10 +1,11 @@
 from http.cookies import SimpleCookie
 from unittest.mock import Mock, patch
 
-from django.test import Client
+from django.test import Client, override_settings
 from django.urls import reverse
 
 
+@override_settings(MIDDLEWARE=[])
 def test_callback_without_messages():
     """
     The okta callback function should
