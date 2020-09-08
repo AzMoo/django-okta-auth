@@ -113,7 +113,7 @@ OKTA_AUTH = {
     "REDIRECT_URI": "http://localhost:8000/oauth2/callback",
     "LOGIN_REDIRECT_URL": "/", # default
     "CACHE_PREFIX": "okta", # default
-    "CACHE_ALIAS: "default", # default
+    "CACHE_ALIAS": "default", # default
     "PUBLIC_NAMED_URLS": (), # default
     "PUBLIC_URLS": (), # default
 }
