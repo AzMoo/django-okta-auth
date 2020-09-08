@@ -21,11 +21,13 @@ Install from PyPI:
 
 Add `okta_oauth2.apps.OktaOauth2Config` to `INSTALLED_APPS`:
 
-    INSTALLED_APPS = (
-        ...,
-        'okta_oauth2.apps.OktaOauth2Config',
-        ...
-    )
+```python
+INSTALLED_APPS = (
+    "...",
+    'okta_oauth2.apps.OktaOauth2Config',
+    "..."
+)
+```
 
 ### Authentication Backend
 
@@ -33,7 +35,9 @@ You will need to install the authentication backend. This extends Django's defau
 
 The Authentication Backend should be configured as so:
 
-    AUTHENTICATION_BACKENDS = ("okta_oauth2.backend.OktaBackend",)
+```python
+AUTHENTICATION_BACKENDS = ("okta_oauth2.backend.OktaBackend",)
+```
 
 ### Using the middleware
 
@@ -41,16 +45,18 @@ You can use the middleware to check for valid tokens during ever refresh and aut
 
 The order of middleware is important and the `OktaMiddleware` must be below the `SessionMiddleware` and `AuthenticationMiddleware` to ensure that the session and the user are both on the request:
 
-    MIDDLEWARE = (
-        'django.middleware.security.SecurityMiddleware',
-        'django.contrib.sessions.middleware.SessionMiddleware',
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.csrf.CsrfViewMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'okta_oauth2.middleware.OktaMiddleware'
-    )
+```python
+MIDDLEWARE = (
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'okta_oauth2.middleware.OktaMiddleware'
+)
+```
 
 ### Using the decorator
 
@@ -58,21 +64,25 @@ The alternative to using the middleware is to selectively apply the `okta_oauth2
 
 The decorator is applied to a view like so:
 
-    from okta_oauth2.decorators import okta_login_required
+```python
+from okta_oauth2.decorators import okta_login_required
 
-    @okta_login_required
-    def decorated_view(request):
-        return HttpResponse("i am a protected view")
+@okta_login_required
+def decorated_view(request):
+    return HttpResponse("i am a protected view")
+```
 
 ### Update urls<span></span>.py
 
 Add the `django-okta-auth` views to your `urls.py`. This will provide the `login`, `logout` and `callback` views which are required by the login flows.
 
-    from django.urls import include, path
+```python
+from django.urls import include, path
 
-    urlpatterns = [
-        path('accounts/', include(("okta_oauth2.urls", "okta_oauth2"), namespace="okta_oauth2")),
-    ]
+urlpatterns = [
+    path('accounts/', include(("okta_oauth2.urls", "okta_oauth2"), namespace="okta_oauth2")),
+]
+```
 
 ### Setup your Okta Application
 
@@ -93,31 +103,35 @@ In the Okta admin console create your application with the following steps:
 
 Django Okta Auth settings should be specified in your django `settings.py` as follows:
 
-    OKTA_AUTH = {
-        "ORG_URL": "https://your-org.okta.com/",
-        "ISSUER": "https://your-org.okta.com/oauth2/default",
-        "CLIENT_ID": "yourclientid",
-        "CLIENT_SECRET": "yourclientsecret",
-        "SCOPES": "openid profile email offline_access", # this is the default and can be omitted
-        "REDIRECT_URI": "http://localhost:8000/oauth2/callback",
-        "LOGIN_REDIRECT_URL": "/", # default
-        "CACHE_PREFIX": "okta", # default
-        "CACHE_ALIAS: "default", # default
-        "PUBLIC_NAMED_URLS": (), # default
-        "PUBLIC_URLS": (), # default
-    }
+```python
+OKTA_AUTH = {
+    "ORG_URL": "https://your-org.okta.com/",
+    "ISSUER": "https://your-org.okta.com/oauth2/default",
+    "CLIENT_ID": "yourclientid",
+    "CLIENT_SECRET": "yourclientsecret",
+    "SCOPES": "openid profile email offline_access", # this is the default and can be omitted
+    "REDIRECT_URI": "http://localhost:8000/oauth2/callback",
+    "LOGIN_REDIRECT_URL": "/", # default
+    "CACHE_PREFIX": "okta", # default
+    "CACHE_ALIAS: "default", # default
+    "PUBLIC_NAMED_URLS": (), # default
+    "PUBLIC_URLS": (), # default
+}
+```
 
 ### Login Template
 
 The login view will render the `okta_oauth2/login.html` template. It will be passed the following information in the `config` template context variable:
 
-    {
-        "clientId": settings.OKTA_AUTH["CLIENT_ID"],
-        "url": settings.OKTA_AUTH["ORG_URL"],
-        "redirectUri": settings.OKTA_AUTH["REDIRECT_URI"],
-        "scope": settings.OKTA_AUTH["SCOPES"],
-        "issuer": settings.OKTA_AUTH["ISSUER"]
-    }
+```python
+{
+    "clientId": settings.OKTA_AUTH["CLIENT_ID"],
+    "url": settings.OKTA_AUTH["ORG_URL"],
+    "redirectUri": settings.OKTA_AUTH["REDIRECT_URI"],
+    "scope": settings.OKTA_AUTH["SCOPES"],
+    "issuer": settings.OKTA_AUTH["ISSUER"]
+}
+```
 
 The easiest way to use this is to implement the [Okta Sign-In Widget](https://developer.okta.com/code/javascript/okta_sign-in_widget/) in your template.
 
