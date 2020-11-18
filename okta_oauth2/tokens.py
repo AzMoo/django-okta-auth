@@ -107,7 +107,7 @@ class TokenValidator:
                 user.is_staff = True
                 user.is_superuser = True
                 user.save()
-            else:
+            elif self.config.superuser_group:
                 user.is_staff = False
                 user.is_superuser = False
                 user.save()
