@@ -110,7 +110,7 @@ OKTA_AUTH = {
     "CLIENT_ID": "yourclientid",
     "CLIENT_SECRET": "yourclientsecret",
     "SCOPES": "openid profile email offline_access", # this is the default and can be omitted
-    "REDIRECT_URI": "http://localhost:8000/oauth2/callback",
+    "REDIRECT_URI": "http://localhost:8000/accounts/oauth2/callback",
     "LOGIN_REDIRECT_URL": "/", # default
     "CACHE_PREFIX": "okta", # default
     "CACHE_ALIAS": "default", # default
@@ -143,24 +143,29 @@ A minimal template for the login could be:
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="https://global.oktacdn.com/okta-signin-widget/3.1.3/js/okta-sign-in.min.js" type="text/javascript"></script>
-        <link href="https://global.oktacdn.com/okta-signin-widget/3.1.3/css/okta-sign-in.min.css" type="text/css" rel="stylesheet"/>
+        <script src="https://global.oktacdn.com/okta-signin-widget/5.0.1/js/okta-sign-in.min.js" type="text/javascript"></script>
+        <link href="https://global.oktacdn.com/okta-signin-widget/5.0.1/css/okta-sign-in.min.css" type="text/css" rel="stylesheet"/>
     </head>
     <body>
         <div id="okta-login-container"></div>
 
-        <script>
+        <script type="text/javascript">
         var oktaSignIn = new OktaSignIn({
-            logo: 'https://logo.clearbit.com/fakedetail.com',
             baseUrl: '{{config.url}}',
             clientId: '{{config.clientId}}',
             redirectUri: '{{config.redirectUri}}',
             authParams: {
                 issuer: '{{config.issuer}}',
                 responseType: ['code'],
-                scopes: "{{config.scope}}".split(" ")
+                scopes: "{{config.scope}}".split(" "),
+                pkce: false,
             },
         });
+        oktaSignIn.renderEl(
+            {el: '#okta-login-container'},
+            function (res) {
+                console.log(res);
+            }
         </script>
 
     </body>
