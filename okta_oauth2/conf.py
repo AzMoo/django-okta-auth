@@ -33,6 +33,9 @@ class Config:
             self.redirect_uri = settings.OKTA_AUTH["REDIRECT_URI"]
             self.login_redirect_url = settings.OKTA_AUTH.get("LOGIN_REDIRECT_URL", "/")
 
+            # Option logo URL
+            self.logo_url = settings.OKTA_AUTH.get("LOGO_URL", None)
+
             # Django Specific
             self.cache_prefix = settings.OKTA_AUTH.get("CACHE_PREFIX", "okta")
             self.cache_alias = settings.OKTA_AUTH.get("CACHE_ALIAS", "default")

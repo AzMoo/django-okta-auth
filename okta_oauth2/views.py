@@ -26,6 +26,7 @@ def login(request):
         "redirectUri": str(config.redirect_uri),
         "scope": config.scopes,
         "issuer": config.issuer,
+        "logo": config.logo_url,
     }
     response = render(request, "okta_oauth2/login.html", {"config": okta_config})
 

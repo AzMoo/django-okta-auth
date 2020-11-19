@@ -112,6 +112,7 @@ OKTA_AUTH = {
     "SCOPES": "openid profile email offline_access", # this is the default and can be omitted
     "REDIRECT_URI": "http://localhost:8000/accounts/oauth2/callback",
     "LOGIN_REDIRECT_URL": "/", # default
+    "LOGO_URL": "http://your.org/logo.png", # optional
     "CACHE_PREFIX": "okta", # default
     "CACHE_ALIAS": "default", # default
     "PUBLIC_NAMED_URLS": (), # default
@@ -129,7 +130,8 @@ The login view will render the `okta_oauth2/login.html` template. It will be pas
     "url": settings.OKTA_AUTH["ORG_URL"],
     "redirectUri": settings.OKTA_AUTH["REDIRECT_URI"],
     "scope": settings.OKTA_AUTH["SCOPES"],
-    "issuer": settings.OKTA_AUTH["ISSUER"]
+    "issuer": settings.OKTA_AUTH["ISSUER"],
+    "logo":  settings.OKTA_AUTH["LOGO_URL"]
 }
 ```
 
@@ -160,6 +162,9 @@ A minimal template for the login could be:
                 scopes: "{{config.scope}}".split(" "),
                 pkce: false,
             },
+            {% if config.logo %}
+            logo: '{{config.logo}}',
+            {% endif %}
         });
         oktaSignIn.renderEl(
             {el: '#okta-login-container'},
