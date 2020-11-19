@@ -99,20 +99,20 @@ class TokenValidator:
                     username=claims["email"], email=claims["email"]
                 )
 
-            if (
-                self.config.superuser_group
-                and "groups" in claims
-                and self.config.superuser_group in claims["groups"]
-            ):
-                user.is_staff = True
-                user.is_superuser = True
-                user.save()
-            elif self.config.superuser_group:
-                user.is_staff = False
-                user.is_superuser = False
-                user.save()
-
             if self.config.manage_groups:
+                if (
+                    self.config.superuser_group
+                    and "groups" in claims
+                    and self.config.superuser_group in claims["groups"]
+                ):
+                    user.is_staff = True
+                    user.is_superuser = True
+                    user.save()
+                elif "groups" in claims:
+                    user.is_staff = False
+                    user.is_superuser = False
+                    user.save()
+
                 self.manage_groups(user, claims["groups"])
 
         if "access_token" in token_result:
