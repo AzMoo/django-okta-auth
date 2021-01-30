@@ -1,2 +1,7 @@
 setup.py
 dist
+__pycache__
+.pytest_cache
+.env
+poetry.lock
+.python-version
