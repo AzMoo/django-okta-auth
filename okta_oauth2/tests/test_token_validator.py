@@ -78,7 +78,7 @@ def get_normal_user_with_groups_token(self, code):
 
 
 def add_session(req):
-    mw = SessionMiddleware()
+    mw = SessionMiddleware("response")
     mw.process_request(req)
     req.session.save()
 
