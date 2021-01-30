@@ -82,6 +82,7 @@ class TokenValidator:
 
     def handle_token_result(self, token_result):
         tokens = {}
+        user = None
 
         if token_result is None or "id_token" not in token_result:
             return None, tokens
@@ -99,18 +100,17 @@ class TokenValidator:
                     username=claims["email"], email=claims["email"]
                 )
 
-            if (
+            user.is_superuser = bool(
                 self.config.superuser_group
                 and "groups" in claims
                 and self.config.superuser_group in claims["groups"]
-            ):
-                user.is_staff = True
-                user.is_superuser = True
-                user.save()
-            else:
-                user.is_staff = False
-                user.is_superuser = False
-                user.save()
+            )
+            user.is_staff = bool(
+                self.config.staff_group
+                and "groups" in claims
+                and self.config.staff_group in claims["groups"]
+            )
+            user.save()
 
             if self.config.manage_groups:
                 self.manage_groups(user, claims["groups"])
