@@ -1,6 +1,7 @@
 # Django Okta Auth
 
 ## Overview
+
 Django Okta Auth is a library that acts as a client for the Okta OpenID Connect provider.
 
 The library provides a set of views for login, logout and callback, an auth backend for authentication, a middleware for token verification in requests, and a decorator that can be selectively applied to individual views.
@@ -31,7 +32,7 @@ INSTALLED_APPS = (
 
 ### Authentication Backend
 
-You will need to install the authentication backend. This extends Django's default `ModelBackend` which uses the configured database for user storage, but overrides the `authenticate` method to accept the `auth_code` returned by Okta's `/authorize` API endpoint [as documented here](https://developer.okta.com/docs/reference/api/oidc/#authorize).  
+You will need to install the authentication backend. This extends Django's default `ModelBackend` which uses the configured database for user storage, but overrides the `authenticate` method to accept the `auth_code` returned by Okta's `/authorize` API endpoint [as documented here](https://developer.okta.com/docs/reference/api/oidc/#authorize).
 
 The Authentication Backend should be configured as so:
 
@@ -141,93 +142,103 @@ A minimal template for the login could be:
 ```html
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script src="https://global.oktacdn.com/okta-signin-widget/5.0.1/js/okta-sign-in.min.js" type="text/javascript"></script>
-        <link href="https://global.oktacdn.com/okta-signin-widget/5.0.1/css/okta-sign-in.min.css" type="text/css" rel="stylesheet"/>
-    </head>
-    <body>
-        <div id="okta-login-container"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://global.oktacdn.com/okta-signin-widget/5.0.1/js/okta-sign-in.min.js"
+      type="text/javascript"
+    ></script>
+    <link
+      href="https://global.oktacdn.com/okta-signin-widget/5.0.1/css/okta-sign-in.min.css"
+      type="text/css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="okta-login-container"></div>
 
-        <script type="text/javascript">
-        var oktaSignIn = new OktaSignIn({
-            baseUrl: '{{config.url}}',
-            clientId: '{{config.clientId}}',
-            redirectUri: '{{config.redirectUri}}',
-            authParams: {
-                issuer: '{{config.issuer}}',
-                responseType: ['code'],
-                scopes: "{{config.scope}}".split(" "),
-                pkce: false,
-            },
-        });
-        oktaSignIn.renderEl(
-            {el: '#okta-login-container'},
-            function (res) {
-                console.log(res);
-            }
-        </script>
-
-    </body>
+    <script type="text/javascript">
+      var oktaSignIn = new OktaSignIn({
+          baseUrl: '{{config.url}}',
+          clientId: '{{config.clientId}}',
+          redirectUri: '{{config.redirectUri}}',
+          authParams: {
+              issuer: '{{config.issuer}}',
+              responseType: ['code'],
+              scopes: "{{config.scope}}".split(" "),
+              pkce: false,
+          },
+      });
+      oktaSignIn.renderEl(
+          {el: '#okta-login-container'},
+          function (res) {
+              console.log(res);
+          }
+    </script>
+  </body>
 </html>
 ```
 
 ## Settings Reference
 
-***ORG_URL***:
+**_ORG_URL_**:
 
-*str*. URL Okta provides for your organization account. This is the URL that you log in to for the admin panel, minus the `-admin`. eg, if your admin URL is https://myorg-admin.okta.com/ then your `ORG_URL` should be: https://myorg.okta.com/
+_str_. URL Okta provides for your organization account. This is the URL that you log in to for the admin panel, minus the `-admin`. eg, if your admin URL is https://myorg-admin.okta.com/ then your `ORG_URL` should be: https://myorg.okta.com/
 
-***ISSUER***
+**_ISSUER_**
 
-*str*. This is the URL for your Authorization Server. If you're using the default authorization server then this will be: `https://{ORG_URL}/oauth2/default`
+_str_. This is the URL for your Authorization Server. If you're using the default authorization server then this will be: `https://{ORG_URL}/oauth2/default`
 
-***CLIENT_ID***
+**_CLIENT_ID_**
 
-*str*. The Client ID provided by your Okta Application.
+_str_. The Client ID provided by your Okta Application.
 
-***CLIENT_SECRET***
+**_CLIENT_SECRET_**
 
-*str*. The Client Secret provided by your Okta Application.
+_str_. The Client Secret provided by your Okta Application.
 
-***SCOPES***
+**_SCOPES_**
 
-*str*. The scopes requested from the OpenID Authorization server. At the very least this needs to be `"openid profile email"` but if you want to use refresh tokens you will need `"openid profile email offline_access"`. This is the default.
+_str_. The scopes requested from the OpenID Authorization server. At the very least this needs to be `"openid profile email"` but if you want to use refresh tokens you will need `"openid profile email offline_access"`. This is the default.
 
 If you want Okta to manage your groups then you should also include `groups` in your scopes.
 
-***REDIRECT_URI***
+**_REDIRECT_URI_**
 
-*str*. This is the URL to the `callback` view that the okta Sign-In Widget will redirect the browser to after the username and password have been authorized. If the directions in the `urls.py` section of the documentation were followed and your django server is running on `localhost:8000` then this will be: http://localhost:8000/accounts/callback/
+_str_. This is the URL to the `callback` view that the okta Sign-In Widget will redirect the browser to after the username and password have been authorized. If the directions in the `urls.py` section of the documentation were followed and your django server is running on `localhost:8000` then this will be: http://localhost:8000/accounts/callback/
 
-***LOGIN_REDIRECT_URL***
+**_LOGIN_REDIRECT_URL_**
 
-*str*. This is the URL to redirect to from the `callback` after a successful login. Defaults to `/`.
+_str_. This is the URL to redirect to from the `callback` after a successful login. Defaults to `/`.
 
-***CACHE_PREFIX***
+**_CACHE_PREFIX_**
 
-*str*. The application will utilise the django cache to store public keys requested from Okta in an effort to minimise network round-trips and speed up authorization. This setting will control the prefix for the cache keys. Defaults to `okta`.
+_str_. The application will utilise the django cache to store public keys requested from Okta in an effort to minimise network round-trips and speed up authorization. This setting will control the prefix for the cache keys. Defaults to `okta`.
 
-***CACHE_ALIAS***
+**_CACHE_ALIAS_**
 
-*str*. Specify which django cache should be utilised for storing public keys. Defaults to `default`.
+_str_. Specify which django cache should be utilised for storing public keys. Defaults to `default`.
 
-***PUBLIC_NAMED_URLS***
+**_PUBLIC_NAMED_URLS_**
 
-*List[str]*. A list or tuple of URL names that should be accessible without tokens. If you add a URL in this setting the middleware won't check for tokens. Default is: `[]`
+_List[str]_. A list or tuple of URL names that should be accessible without tokens. If you add a URL in this setting the middleware won't check for tokens. Default is: `[]`
 
-***PUBLIC_URLS***
+**_PUBLIC_URLS_**
 
-*List[str]*. A list or tuple of URL regular expressions that should be accessible without tokens. If you add a regex in this setting the middleware won't check matching paths for tokens. Default is `[]`.
+_List[str]_. A list or tuple of URL regular expressions that should be accessible without tokens. If you add a regex in this setting the middleware won't check matching paths for tokens. Default is `[]`.
 
-***SUPERUSER_GROUP***
+**_SUPERUSER_GROUP_**
 
-*str*. Members of this group will be created with the django `is_staff` and `is_superuser` flags set.
+_str_. Members of this group will have the django `is_superuser` user flags set.
 
-***MANAGE_GROUPS***
+**_STAFF_GROUP_**
 
-*bool*. If true the authentication backend will manage django groups for you.
+_str_. Members of this group will have the django `is_staff` user flags set.
+
+**_MANAGE_GROUPS_**
+
+_bool_. If true the authentication backend will manage django groups for you.
 
 ***USE_USERNAME***
 

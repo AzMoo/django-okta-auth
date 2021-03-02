@@ -23,6 +23,7 @@ from okta_oauth2.tests.utils import (
 from okta_oauth2.tokens import DiscoveryDocument, TokenValidator
 
 SUPERUSER_GROUP = "Superusers"
+STAFF_GROUP = "Staff"
 
 KEY_1 = {
     "alg": "RS256",
@@ -65,6 +66,14 @@ def get_superuser_token_result(self, code):
     return {
         "access_token": build_access_token(),
         "id_token": build_id_token(groups=[SUPERUSER_GROUP]),
+        "refresh_token": "refresh",
+    }
+
+
+def get_staff_token_result(self, code):
+    return {
+        "access_token": build_access_token(),
+        "id_token": build_id_token(groups=[STAFF_GROUP]),
         "refresh_token": "refresh",
     }
 
@@ -464,8 +473,8 @@ def test_existing_superuser_is_deescalated_from_superuser_group(
     rf, settings, django_user_model
 ):
     """
-    If an existing user is added to a superuser group they should
-    be escalated to a superuser.
+    If an existing user is removed from a superuser group they should
+    be deescalated from a superuser.
     """
     settings.OKTA_AUTH = update_okta_settings(
         settings.OKTA_AUTH, "SUPERUSER_GROUP", SUPERUSER_GROUP
@@ -490,6 +499,66 @@ def test_existing_superuser_is_deescalated_from_superuser_group(
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
         assert user.is_superuser is False
+
+
+@pytest.mark.django_db
+def test_existing_user_is_escalated_to_staff_group(rf, settings, django_user_model):
+    """
+    If an existing user is added to a staff group they should
+    be escalated to a superuser.
+    """
+    settings.OKTA_AUTH = update_okta_settings(
+        settings.OKTA_AUTH, "STAFF_GROUP", STAFF_GROUP
+    )
+
+    user = django_user_model._default_manager.create_user(
+        username="fakemail@notreal.com", email="fakemail@notreal.com"
+    )
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_staff_token_result,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        assert isinstance(user, django_user_model)
+        assert user.is_staff
+
+
+@pytest.mark.django_db
+def test_existing_superuser_is_deescalated_from_staff_group(
+    rf, settings, django_user_model
+):
+    """
+    If an existing user is removed from a staff group they should
+    have the staff flag removed.
+    """
+    settings.OKTA_AUTH = update_okta_settings(
+        settings.OKTA_AUTH, "STAFF_GROUP", STAFF_GROUP
+    )
+
+    user = django_user_model._default_manager.create_user(
+        username="fakemail@notreal.com",
+        email="fakemail@notreal.com",
+        is_staff=True,
+    )
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_normal_user_with_groups_token,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        assert isinstance(user, django_user_model)
+        assert user.is_staff is False
 
 
 @pytest.mark.django_db
