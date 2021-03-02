@@ -116,6 +116,7 @@ OKTA_AUTH = {
     "CACHE_ALIAS": "default", # default
     "PUBLIC_NAMED_URLS": (), # default
     "PUBLIC_URLS": (), # default
+    "USE_USERNAME": False, # default
 }
 ```
 
@@ -227,6 +228,10 @@ If you want Okta to manage your groups then you should also include `groups` in 
 ***MANAGE_GROUPS***
 
 *bool*. If true the authentication backend will manage django groups for you.
+
+***USE_USERNAME***
+
+*bool*. If true the authentication backend will lookup django users by username rather than email.
 
 ## License
 
