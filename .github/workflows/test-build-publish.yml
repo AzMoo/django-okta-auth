@@ -5,17 +5,15 @@ on: [push]
 jobs:
   style:
     name: Check code style
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Install dependencies
         run: |
-          sudo apt-get install python3.7-venv
-          python -m pip install --upgrade pip setuptools
           python -m pip install poetry
           poetry install
       - name: Check styles with pre-commit
@@ -24,21 +22,18 @@ jobs:
 
   build:
     name: Test and build python distribution
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-20.04"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-
+        python-version: [3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install python${{ matrix.python-version }}-venv
-          python -m pip install --upgrade pip setuptools
           python -m pip install poetry
           poetry install
       - name: Test with pytest
@@ -51,14 +46,12 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
       - name: Install dependencies
         run: |
-          sudo apt-get install python3.7-venv
-          python -m pip install --upgrade pip setuptools
           python -m pip install poetry
           poetry install
       - name: Build the sdist and wheel

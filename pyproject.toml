@@ -24,6 +24,8 @@ rope = "^0.16.0"
 pytest = "^5.3.5"
 pytest-django = "^3.8.0"
 mypy = "^0.782"
+black = {version = "^20.8b1", allow-prereleases = true}
+flake8 = "^3.8.4"
 
 [build-system]
 requires = ["poetry>=0.12"]

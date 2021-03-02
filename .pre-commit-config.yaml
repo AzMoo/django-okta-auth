@@ -2,7 +2,7 @@
   rev: stable
   hooks:
     - id: black
-      language_version: python3.7
+      language_version: python3.8
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v1.2.3
   hooks:
@@ -23,14 +23,14 @@
   hooks:
     - id: isort
       exclude: migrations\/[^/]*\.py$
--   repo: local
-    hooks:
-    -   id: django-migrations
-        name: Django unmigrated changes
-        description: 'This hook checks for unmigrated changes'
-        entry: sh -c "! poetry run parts makemigrations --dry-run --exit"
-        language: system
-        files: \.py$
+- repo: local
+  hooks:
+    - id: django-migrations
+      name: Django unmigrated changes
+      description: "This hook checks for unmigrated changes"
+      entry: sh -c "! poetry run parts makemigrations --dry-run --exit"
+      language: system
+      files: \.py$
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.1.6
   hooks:
