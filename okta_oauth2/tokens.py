@@ -94,7 +94,9 @@ class TokenValidator:
             tokens["claims"] = claims
             username = claims["email"]
             if self.config.use_username:
-                username = claims["email"].split("@")[0]
+                last_at = claims["email"].rfind("@")
+                username = claims["email"][:last_at]
+
             try:
                 user = UserModel._default_manager.get_by_natural_key(username)
             except UserModel.DoesNotExist:
