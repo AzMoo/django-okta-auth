@@ -92,12 +92,16 @@ class TokenValidator:
         if claims:
             tokens["id_token"] = token_result["id_token"]
             tokens["claims"] = claims
+            username = claims["email"]
+            if self.config.use_username:
+                last_at = claims["email"].rfind("@")
+                username = claims["email"][:last_at]
 
             try:
-                user = UserModel._default_manager.get_by_natural_key(claims["email"])
+                user = UserModel._default_manager.get_by_natural_key(username)
             except UserModel.DoesNotExist:
                 user = UserModel._default_manager.create_user(
-                    username=claims["email"], email=claims["email"]
+                    username=username, email=claims["email"]
                 )
 
             user.is_superuser = bool(
