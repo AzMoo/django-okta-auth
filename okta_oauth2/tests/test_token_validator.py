@@ -22,6 +22,7 @@ from okta_oauth2.tests.utils import (
 )
 from okta_oauth2.tokens import DiscoveryDocument, TokenValidator
 
+ACCESS_GROUP = "Access"
 SUPERUSER_GROUP = "Superusers"
 STAFF_GROUP = "Staff"
 
@@ -58,6 +59,14 @@ def get_token_result(self, code):
     return {
         "access_token": build_access_token(),
         "id_token": build_id_token(),
+        "refresh_token": "refresh",
+    }
+
+
+def get_access_token_result(self, code):
+    return {
+        "access_token": build_access_token(),
+        "id_token": build_id_token(groups=[ACCESS_GROUP]),
         "refresh_token": "refresh",
     }
 
@@ -148,6 +157,37 @@ def test_handle_token_result_handles_missing_tokens(rf):
     tv = TokenValidator(c, "defaultnonce", req)
     result = tv.handle_token_result({})
     assert result == (None, {})
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("access_group,user_returned", [
+    (ACCESS_GROUP, True),
+    ("InvalidAccessGroup", False),
+    (None, True),
+])
+def test_access_group_grants_access(access_group, user_returned, rf, settings, django_user_model):
+    """
+    If the user is part of the superuser group defined
+    in settings make sure that the created user is a superuser.
+    """
+    settings.OKTA_AUTH = update_okta_settings(
+        settings.OKTA_AUTH, "ACCESS_GROUP", access_group
+    )
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_access_token_result,
+    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        if user_returned:
+            assert isinstance(user, django_user_model)
+        else:
+            assert user is None
 
 
 @pytest.mark.django_db

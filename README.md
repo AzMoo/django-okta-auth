@@ -228,6 +228,10 @@ _List[str]_. A list or tuple of URL names that should be accessible without toke
 
 _List[str]_. A list or tuple of URL regular expressions that should be accessible without tokens. If you add a regex in this setting the middleware won't check matching paths for tokens. Default is `[]`.
 
+**_ACCESS_GROUP_**
+
+_str_. Members of this group will have access to the application.
+
 **_SUPERUSER_GROUP_**
 
 _str_. Members of this group will have the django `is_superuser` user flags set.

@@ -92,6 +92,10 @@ class TokenValidator:
         if claims:
             tokens["id_token"] = token_result["id_token"]
             tokens["claims"] = claims
+            if self.config.access_group:
+                if not ("groups" in claims and self.config.access_group in claims["groups"]):
+                    return None, tokens
+
             username = claims["email"]
             if self.config.use_username:
                 last_at = claims["email"].rfind("@")

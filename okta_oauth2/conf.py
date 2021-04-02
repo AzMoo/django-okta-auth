@@ -18,6 +18,8 @@ class Config:
         try:
             # Configuration object
             self.org_url = settings.OKTA_AUTH["ORG_URL"]
+            # Give users in this okta group access to this application
+            self.access_group = settings.OKTA_AUTH.get("ACCESS_GROUP", None)
             # Make users in this okta group superusers
             self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", None)
             # Make users in this okta group staff
