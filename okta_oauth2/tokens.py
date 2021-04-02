@@ -90,7 +90,11 @@ class TokenValidator:
         if token_result is None or "id_token" not in token_result:
             return None, tokens
 
-        claims = self.validate_token(token_result["id_token"])
+        if self.using_org_authorization_server:
+            self.validate_token(token_result["id_token"])
+            claims = self.request_userinfo(token_result["access_token"])
+        else:
+            claims = self.validate_token(token_result["id_token"])
 
         if claims:
             tokens["id_token"] = token_result["id_token"]
@@ -133,6 +137,10 @@ class TokenValidator:
             self.request.session.modified = True
 
         return user, tokens
+
+    @property
+    def using_org_authorization_server(self):
+        return self.config.issuer.endswith("okta.com")
 
     def call_token_endpoint(self, endpoint_data):
         """Call /token endpoint
@@ -177,6 +185,13 @@ class TokenValidator:
             )
 
         return result if len(result.keys()) > 0 else None
+
+    def request_userinfo(self, access_token):
+        discovery_doc = self.discovery_document.getJson()
+        r = requests.post(discovery_doc["userinfo_endpoint"], headers={
+            "Authorization": "Bearer " + access_token,
+        })
+        return r.json()
 
     def request_jwks(self):
         discovery_doc = self.discovery_document.getJson()

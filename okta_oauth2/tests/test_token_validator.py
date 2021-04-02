@@ -53,6 +53,10 @@ KEY_2 = {
 }
 
 
+def mock_request_userinfo(self):
+    return {"email": "email@email.com", "groups": [SUPERUSER_GROUP, STAFF_GROUP]}
+
+
 def mock_request_jwks(self):
     return {"keys": [KEY_1, KEY_2]}
 
@@ -229,6 +233,20 @@ def test_call_token_endpoint_handles_error(mock_post, rf):
     ), pytest.raises(TokenRequestFailed):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.call_token_endpoint(endpoint_data)
+
+
+@patch("okta_oauth2.tokens.requests.post")
+def test_request_userinfo(mock_post, rf):
+    """ Test jwks method returns json """
+    mock_post.return_value = Mock(ok=True)
+    mock_post.return_value.json.return_value = mock_request_jwks(None)
+
+    c = Config()
+
+    with patch("okta_oauth2.tokens.TokenValidator._discovery_document", MagicMock()):
+        tv = TokenValidator(c, "defaultnonce", rf.get("/"))
+        result = tv.request_userinfo("access_token")
+        assert result == mock_request_jwks(None)
 
 
 def test_jwks_returns_cached_key(rf):
