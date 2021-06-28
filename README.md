@@ -175,6 +175,7 @@ A minimal template for the login could be:
           function (res) {
               console.log(res);
           }
+      )
     </script>
   </body>
 </html>
