@@ -174,7 +174,7 @@ A minimal template for the login could be:
           {el: '#okta-login-container'},
           function (res) {
               console.log(res);
-          }
+          })
     </script>
   </body>
 </html>
