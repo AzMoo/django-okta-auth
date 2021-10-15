@@ -25,6 +25,7 @@ from .exceptions import (
     TokenExpired,
     TokenRequestFailed,
     TokenTooFarAway,
+    UserinfoRequestFailed,
 )
 
 UserModel = get_user_model()
@@ -87,6 +88,12 @@ class TokenValidator:
         if token_result is None or "id_token" not in token_result:
             return None, tokens
 
+        if "access_token" in token_result:
+            tokens["access_token"] = token_result["access_token"]
+
+        if "refresh_token" in token_result:
+            tokens["refresh_token"] = token_result["refresh_token"]
+
         claims = self.validate_token(token_result["id_token"])
 
         if claims:
@@ -104,6 +111,12 @@ class TokenValidator:
                     username=username, email=claims["email"]
                 )
 
+            # Fallback groups from userinfo endpoint
+            if "groups" not in claims:
+                userinfo = self.get_userinfo_endpoint(tokens["access_token"])
+                if "groups" in userinfo:
+                    claims["groups"] = userinfo["groups"]
+
             user.is_superuser = bool(
                 self.config.superuser_group
                 and "groups" in claims
@@ -118,12 +131,6 @@ class TokenValidator:
 
             if self.config.manage_groups:
                 self.manage_groups(user, claims["groups"])
-
-        if "access_token" in token_result:
-            tokens["access_token"] = token_result["access_token"]
-
-        if "refresh_token" in token_result:
-            tokens["refresh_token"] = token_result["refresh_token"]
 
         if user:
             self.request.session["tokens"] = tokens
@@ -169,6 +176,30 @@ class TokenValidator:
             )
 
         return result if len(result.keys()) > 0 else None
+
+    def get_userinfo_endpoint(self, access_token):
+        """Get userinfo endpoint
+        Returns userinfo response
+        """
+        discovery_doc = self.discovery_document.getJson()
+        userinfo_endpoint = discovery_doc["userinfo_endpoint"]
+
+        header = {
+            "Authorization": "Bearer: " + access_token,
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        # Send token request
+        r = requests.get(userinfo_endpoint, headers=header)
+        response = r.json()
+
+        # Return object
+        if response:
+            return response
+        else:
+            raise UserinfoRequestFailed(
+                response["error"], response.get("error_description", None)
+            )
 
     def request_jwks(self):
         discovery_doc = self.discovery_document.getJson()

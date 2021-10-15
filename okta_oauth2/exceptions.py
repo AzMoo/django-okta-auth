@@ -56,3 +56,9 @@ class TokenRequestFailed(DjangoOktaAuthException):
 
 class MissingAuthTokens(DjangoOktaAuthException):
     pass
+
+
+class UserinfoRequestFailed(DjangoOktaAuthException):
+    """ The request to the userinfo api endpoint has failed. """
+
+    pass
