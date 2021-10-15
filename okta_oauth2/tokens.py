@@ -185,21 +185,20 @@ class TokenValidator:
         userinfo_endpoint = discovery_doc["userinfo_endpoint"]
 
         header = {
-            "Authorization": "Bearer: " + access_token,
+            "Authorization": "Bearer " + access_token,
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
         # Send token request
         r = requests.get(userinfo_endpoint, headers=header)
-        response = r.json()
+        if r.status_code == 200:
+            response = r.json()
 
         # Return object
         if response:
             return response
         else:
-            raise UserinfoRequestFailed(
-                response["error"], response.get("error_description", None)
-            )
+            raise UserinfoRequestFailed()
 
     def request_jwks(self):
         discovery_doc = self.discovery_document.getJson()
