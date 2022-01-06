@@ -2,6 +2,7 @@ import base64
 import logging
 import time
 from typing import Optional
+from django.conf import settings
 
 import jwt as jwt_python
 import requests
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 class DiscoveryDocument:
     # Find the OIDC metadata through discovery
     def __init__(self, issuer_uri):
+        config = Config()
         r = requests.get(issuer_uri + "/.well-known/openid-configuration")
         self.json = r.json()
 
@@ -45,12 +47,13 @@ class DiscoveryDocument:
 class TokenValidator:
     _discovery_document = None
 
-    def __init__(self, config, nonce, request):
+    def __init__(self, config, nonce, request, auth_code=None):
         self.config = config
         self.cache = caches[config.cache_alias]
         self.cache_key = "{}-keys".format(config.cache_prefix)
         self.request = request
         self.nonce = nonce
+        self.auth_code = auth_code
 
     @property
     def discovery_document(self):
@@ -92,32 +95,35 @@ class TokenValidator:
         if claims:
             tokens["id_token"] = token_result["id_token"]
             tokens["claims"] = claims
-            username = claims["email"]
-            if self.config.use_username:
-                last_at = claims["email"].rfind("@")
-                username = claims["email"][:last_at]
-
+            
+            # Get the username, then replace any \\ with a single \
+            username = claims[self.config.user_mapping_username].replace('\\\\', '\\')
+            email = claims[self.config.user_mapping_email]
             try:
                 user = UserModel._default_manager.get_by_natural_key(username)
             except UserModel.DoesNotExist:
+                # Only these fields are required
                 user = UserModel._default_manager.create_user(
                     username=username, email=claims["email"]
                 )
 
+            user.first_name = claims[self.config.user_mapping_first_name]
+            user.last_name = claims[self.config.user_mapping_last_name]
+                
             user.is_superuser = bool(
                 self.config.superuser_group
                 and "groups" in claims
-                and self.config.superuser_group in claims["groups"]
+                and self.config.superuser_group in claims[self.config.group_name]
             )
             user.is_staff = bool(
                 self.config.staff_group
                 and "groups" in claims
-                and self.config.staff_group in claims["groups"]
+                and self.config.staff_group in claims[self.config.group_name]
             )
             user.save()
 
             if self.config.manage_groups:
-                self.manage_groups(user, claims["groups"])
+                self.manage_groups(user, claims[self.config.group_name])
 
         if "access_token" in token_result:
             tokens["access_token"] = token_result["access_token"]
@@ -135,6 +141,8 @@ class TokenValidator:
         """Call /token endpoint
         Returns access_token, id_token, and/or refresh_token
         """
+        config = Config()
+        
         discovery_doc = self.discovery_document.getJson()
         token_endpoint = discovery_doc["token_endpoint"]
 
@@ -142,12 +150,15 @@ class TokenValidator:
             self.config.client_id, self.config.client_secret
         )
         authorization_header = base64.b64encode(basic_auth_str.encode())
+        
         header = {
-            "Authorization": "Basic: " + authorization_header.decode("utf-8"),
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        data = {"scope": self.config.scopes, "redirect_uri": self.config.redirect_uri}
+        data = {"grant_type": "authorization_code",
+                "client_id": self.config.client_id,
+                "client_secret": self.config.client_secret,
+                "redirect_uri": self.config.redirect_uri}
 
         data.update(endpoint_data)
         # Send token request
