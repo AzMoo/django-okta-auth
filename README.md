@@ -112,17 +112,17 @@ OKTA_AUTH = {
     "ISSUER": "https://YourOrg.okta.com/oauth2/default",
     "CLIENT_ID": "YourClientId",
     "CLIENT_SECRET": "YourClientSecret",
-    "GROUP_NAME: "MyGroups",        # dflt=groups, but if you have a unique one set it here
+    "GROUP_NAME": "MyGroups",                # dflt=groups, but if you have a unique one set it here
     "SCOPES": "openid profile email offline_access MyGroups",  # Append with the name of your GROUP_NAME
     "REDIRECT_URI": "https://YourWebsite:Port/accounts/oauth2/callback",  # Must match exactly what is in Okta
-    "LOGIN_REDIRECT_URL": "/admin", # dflt="/"
-    "CACHE_PREFIX": "okta",         # dflt="okta"
-    "CACHE_ALIAS": "default",       # dflt=default
-    "PUBLIC_NAMED_URLS": (),        # dflt=()
-    "PUBLIC_URLS": ('/'),           # dflt=()
-    "CACHE_TIMEOUT": 600,           # dflt=600
+    "LOGIN_REDIRECT_URL": "/admin",          # dflt="/"
+    "CACHE_PREFIX": "okta",                  # dflt="okta"
+    "CACHE_ALIAS": "default",                # dflt=default
+    "PUBLIC_NAMED_URLS": (),                 # dflt=()
+    "PUBLIC_URLS": ('/'),                    # dflt=()
+    "CACHE_TIMEOUT": 600,                    # dflt=600
     "USER_MAPPING_USERNAME": "preferred_username",  # dflt="email"
-    "USER_MAPPING_EMAIL": "email",  # dflt="email"
+    "USER_MAPPING_EMAIL": "email",           # dflt="email"
     "USER_MAPPING_FIRST_NAME": "firstName",  # dflt="firstName"
     "USER_MAPPING_LAST_NAME": "lastName",    # dflt="lastName"
     "SUPERUSER_GROUP": "app_XYZ_superusers", # dflt=""
