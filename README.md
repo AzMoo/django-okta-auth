@@ -99,6 +99,7 @@ In the Okta admin console create your application with the following steps:
 8. In the General Settings of the application click edit and check `Authorization Code` and the `Refresh Token` under `Allowed grant types`.
 9. Save the settings
 10. Take note of the `Client ID` and the `Client secret` in the Client Credentials for use in the next section. It is important to note that the `Client secret` is confidential and under no circumstances should be exposed publicly.
+11. You will most likely have to enter a CORS rule for your website address.  Note: it must be exactly including ports in the name, don't mix and match.
 
 ### Django Okta Settings
 
@@ -106,18 +107,26 @@ Django Okta Auth settings should be specified in your django `settings.py` as fo
 
 ```python
 OKTA_AUTH = {
-    "ORG_URL": "https://your-org.okta.com/",
-    "ISSUER": "https://your-org.okta.com/oauth2/default",
-    "CLIENT_ID": "yourclientid",
-    "CLIENT_SECRET": "yourclientsecret",
-    "SCOPES": "openid profile email offline_access", # this is the default and can be omitted
-    "REDIRECT_URI": "http://localhost:8000/accounts/oauth2/callback",
-    "LOGIN_REDIRECT_URL": "/", # default
-    "CACHE_PREFIX": "okta", # default
-    "CACHE_ALIAS": "default", # default
-    "PUBLIC_NAMED_URLS": (), # default
-    "PUBLIC_URLS": (), # default
-    "USE_USERNAME": False, # default
+    "ORG_URL": "https://YourOrg.okta.com/",
+    "ISSUER": "https://YourOrg.okta.com/oauth2/default",
+    "CLIENT_ID": "YourClientId",
+    "CLIENT_SECRET": "YourClientSecret",
+    "GROUP_NAME: "MyGroups",        # dflt=groups, but if you have a unique one set it here
+    "SCOPES": "openid profile email offline_access MyGroups",  # Append with the name of your GROUP_NAME
+    "REDIRECT_URI": "https://YourWebsite:Port/accounts/oauth2/callback",  # Must match exactly what is in Okta
+    "LOGIN_REDIRECT_URL": "/admin", # dflt="/"
+    "CACHE_PREFIX": "okta",         # dflt="okta"
+    "CACHE_ALIAS": "default",       # dflt=default
+    "PUBLIC_NAMED_URLS": (),        # dflt=()
+    "PUBLIC_URLS": ('/'),           # dflt=()
+    "CACHE_TIMEOUT": 600,           # dflt=600
+    "USER_MAPPING_USERNAME": "preferred_username",  # dflt="email"
+    "USER_MAPPING_EMAIL": "email",  # dflt="email"
+    "USER_MAPPING_FIRST_NAME": "firstName",  # dflt="firstName"
+    "USER_MAPPING_LAST_NAME": "lastName",    # dflt="lastName"
+    "SUPERUSER_GROUP": "app_XYZ_superusers", # dflt=""
+    "STAFF_GROUP": "app_XYZ_staff",          # dflt=""
+    "MANAGE_GROUPS": True,                   # dflt=None
 }
 ```
 
@@ -239,10 +248,6 @@ _str_. Members of this group will have the django `is_staff` user flags set.
 **_MANAGE_GROUPS_**
 
 _bool_. If true the authentication backend will manage django groups for you.
-
-***USE_USERNAME***
-
-*bool*. If true the authentication backend will lookup django users by username rather than email.
 
 ## License
 
