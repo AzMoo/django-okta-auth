@@ -99,7 +99,8 @@ In the Okta admin console create your application with the following steps:
 8. In the General Settings of the application click edit and check `Authorization Code` and the `Refresh Token` under `Allowed grant types`.
 9. Save the settings
 10. Take note of the `Client ID` and the `Client secret` in the Client Credentials for use in the next section. It is important to note that the `Client secret` is confidential and under no circumstances should be exposed publicly.
-11. You will most likely have to enter a CORS rule for your website address in Okta.  Note: it must be exactly including ports in the name, don't mix and match.
+11. You will most likely have to enter a CORS rule for your website address in Okta.  
+    Note: The web address must match exactly including ports in the name, don't mix and match.
 
 ### Django Okta Settings
 
