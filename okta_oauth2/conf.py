@@ -24,6 +24,12 @@ class Config:
             self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", None)
             # Allow django-okta-auth to add groups
             self.manage_groups = settings.OKTA_AUTH.get("MANAGE_GROUPS", False)
+            # In Okta there is a 100 AD group limit to the number of groups returned for
+            # a user.  Also often you will create a custom group for your application.
+            # To limit the number of AD Groups, I created a custom name and populated it 
+            # using a regex to return only names like "app_XYZ_*"  Thus getting round the 
+            # 100 name limit.  But we need to pass in the group_name if not the default.
+            self.group_name = settings.OKTA_AUTH.get("GROUP_NAME", "groups")
 
             # OpenID Specific
             self.client_id = settings.OKTA_AUTH["CLIENT_ID"]
@@ -41,6 +47,13 @@ class Config:
             self.cache_timeout = settings.OKTA_AUTH.get("CACHE_TIMEOUT", 600)
             self.use_username = settings.OKTA_AUTH.get("USE_USERNAME", False)
             self.public_urls = self.build_public_urls()
+            
+            # Django User Model Mapping (To allow users to use custom Okta fields to map to Django)
+            self.user_mapping_username = settings.OKTA_AUTH.get("USER_MAPPING_USERNAME", "email")
+            self.user_mapping_email = settings.OKTA_AUTH.get("USER_MAPPING_EMAIL", "email")
+            self.user_mapping_first_name = settings.OKTA_AUTH.get("USER_MAPPING_FIRST_NAME", "firstName")
+            self.user_mapping_last_name = settings.OKTA_AUTH.get("USER_MAPPING_USERNAME", "lastName")
+            
         except (AttributeError, KeyError):
             raise ImproperlyConfigured("Missing Okta authentication settings")
 
