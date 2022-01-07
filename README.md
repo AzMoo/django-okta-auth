@@ -127,7 +127,7 @@ OKTA_AUTH = {
     "USER_MAPPING_LAST_NAME": "lastName",    # dflt="lastName"
     "SUPERUSER_GROUP": "app_XYZ_superusers", # dflt=""
     "STAFF_GROUP": "app_XYZ_staff",          # dflt=""
-    "MANAGE_GROUPS": True,                   # dflt=None
+    "MANAGE_GROUPS": True,                   # dflt=False
 }
 ```
 
