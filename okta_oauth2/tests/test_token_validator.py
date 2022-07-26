@@ -419,7 +419,7 @@ def test_user_is_removed_from_groups(rf, settings, django_user_model):
     settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "MANAGE_GROUPS", True)
 
     user = django_user_model._default_manager.create_user(
-        username="fakemail@notreal.com", email="fakemail@notreal.com"
+        email="fakemail@notreal.com"
     )
     group = Group.objects.create(name="test-group")
 
@@ -451,7 +451,7 @@ def test_existing_user_is_escalated_to_superuser_group(rf, settings, django_user
     )
 
     user = django_user_model._default_manager.create_user(
-        username="fakemail@notreal.com", email="fakemail@notreal.com"
+        email="fakemail@notreal.com"
     )
 
     c = Config()
@@ -481,7 +481,6 @@ def test_existing_superuser_is_deescalated_from_superuser_group(
     )
 
     user = django_user_model._default_manager.create_user(
-        username="fakemail@notreal.com",
         email="fakemail@notreal.com",
         is_staff=True,
         is_superuser=True,
@@ -511,9 +510,7 @@ def test_existing_user_is_escalated_to_staff_group(rf, settings, django_user_mod
         settings.OKTA_AUTH, "STAFF_GROUP", STAFF_GROUP
     )
 
-    user = django_user_model._default_manager.create_user(
-        username="fakemail@notreal.com", email="fakemail@notreal.com"
-    )
+    user = django_user_model._default_manager.create_user(email="fakemail@notreal.com")
 
     c = Config()
     req = rf.get("/")
@@ -542,7 +539,6 @@ def test_existing_superuser_is_deescalated_from_staff_group(
     )
 
     user = django_user_model._default_manager.create_user(
-        username="fakemail@notreal.com",
         email="fakemail@notreal.com",
         is_staff=True,
     )
@@ -559,23 +555,3 @@ def test_existing_superuser_is_deescalated_from_staff_group(
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
         assert user.is_staff is False
-
-
-@pytest.mark.django_db
-def test_user_username_setting_returns_user_by_username_and_not_email(
-    rf, settings, django_user_model
-):
-    settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "USE_USERNAME", True)
-
-    c = Config()
-    req = rf.get("/")
-    add_session(req)
-
-    with patch(
-        "okta_oauth2.tokens.TokenValidator.call_token_endpoint", get_token_result
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
-        tv = TokenValidator(c, "defaultnonce", req)
-        user, tokens = tv.tokens_from_auth_code("authcode")
-        assert isinstance(user, django_user_model)
-        assert user.username == "fakemail"
-        assert user.username != "fakemail@notreal.com"

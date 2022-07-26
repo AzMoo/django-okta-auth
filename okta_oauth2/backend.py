@@ -11,7 +11,7 @@ class OktaBackend(ModelBackend):
     Uses the same user store as the django ModelBackend but actually
     does its authentication using Okta's OIDC authorization servers.
 
-    The Okta sign in widget will accept a username and password,
+    The Okta sign in widget will accept a username( email ) and password,
     validate them, and if successful return an authorization code.
 
     We take that code and use it to obtain an Access Token, an
