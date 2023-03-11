@@ -24,6 +24,8 @@ class Config:
             self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", None)
             # Allow django-okta-auth to add groups
             self.manage_groups = settings.OKTA_AUTH.get("MANAGE_GROUPS", False)
+            # Timeout in seconds for requests to Okta
+            self.request_timeout = settings.OKTA_AUTH.get("REQUEST_TIMEOUT", 10)
 
             # OpenID Specific
             self.client_id = settings.OKTA_AUTH["CLIENT_ID"]

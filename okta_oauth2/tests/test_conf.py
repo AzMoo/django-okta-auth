@@ -2,6 +2,7 @@ import re
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
+
 from okta_oauth2.conf import Config
 from okta_oauth2.tests.utils import update_okta_settings
 

@@ -34,8 +34,11 @@ logger = logging.getLogger(__name__)
 
 class DiscoveryDocument:
     # Find the OIDC metadata through discovery
-    def __init__(self, issuer_uri):
-        r = requests.get(issuer_uri + "/.well-known/openid-configuration")
+    def __init__(self, config):
+        r = requests.get(
+            config.issuer + "/.well-known/openid-configuration",
+            timeout=config.request_timeout,
+        )
         self.json = r.json()
 
     def getJson(self):
@@ -55,7 +58,7 @@ class TokenValidator:
     @property
     def discovery_document(self):
         if self._discovery_document is None:
-            self._discovery_document = DiscoveryDocument(self.config.issuer)
+            self._discovery_document = DiscoveryDocument(self.config)
         return self._discovery_document
 
     def tokens_from_auth_code(self, code):
@@ -151,7 +154,12 @@ class TokenValidator:
 
         data.update(endpoint_data)
         # Send token request
-        r = requests.post(token_endpoint, headers=header, params=data)
+        r = requests.post(
+            token_endpoint,
+            headers=header,
+            params=data,
+            timeout=self.config.request_timeout,
+        )
         response = r.json()
 
         # Return object
@@ -172,7 +180,7 @@ class TokenValidator:
 
     def request_jwks(self):
         discovery_doc = self.discovery_document.getJson()
-        r = requests.get(discovery_doc["jwks_uri"])
+        r = requests.get(discovery_doc["jwks_uri"], timeout=self.config.request_timeout)
         return r.json()
 
     def _jwks(self, kid):

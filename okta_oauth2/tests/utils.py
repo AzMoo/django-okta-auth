@@ -1,5 +1,6 @@
 from django.utils.timezone import now
 from jose import jwt
+
 from okta_oauth2.conf import Config
 
 

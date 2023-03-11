@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import caches
 from django.utils.timezone import now
+
 from okta_oauth2.conf import Config
 from okta_oauth2.exceptions import (
     InvalidClientID,
@@ -256,7 +257,7 @@ def test_jwks_sets_cache_and_returns(rf):
 
 @patch("okta_oauth2.tokens.requests.get")
 def test_request_jwks(mock_get, rf):
-    """ Test jwks method returns json """
+    """Test jwks method returns json"""
     mock_get.return_value = Mock(ok=True)
     mock_get.return_value.json.return_value = mock_request_jwks(None)
 
@@ -269,7 +270,7 @@ def test_request_jwks(mock_get, rf):
 
 
 def test_jwks_returns_if_none_found(rf):
-    """ The _jwks method should return None if no key is found. """
+    """The _jwks method should return None if no key is found."""
     c = Config()
 
     with patch(
@@ -280,7 +281,7 @@ def test_jwks_returns_if_none_found(rf):
 
 
 def test_validate_token_successfully_validates(rf):
-    """ A valid token should return the decoded token. """
+    """A valid token should return the decoded token."""
     token = build_id_token()
     c = Config()
     with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
