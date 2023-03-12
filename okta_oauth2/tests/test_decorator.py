@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from django.test import Client
 
-from okta_oauth2.tests.utils import build_id_token
+from okta_oauth2.tests.utils import TEST_PUBLIC_KEY, build_id_token
 
 
 def test_decorator_prevents_unauthenticated_access(client: Client):
@@ -27,7 +27,9 @@ def test_decorator_allows_access_to_valid_token(client: Client):
     session["tokens"] = {"id_token": token}
     session.save()
 
-    with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    with patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         response = client.get("/decorated/")
         assert response.status_code == 200
 

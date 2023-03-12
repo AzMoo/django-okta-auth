@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import caches
 from django.utils.timezone import now
+from rsa import newkeys
 
 from okta_oauth2.conf import Config
 from okta_oauth2.exceptions import (
@@ -17,6 +18,7 @@ from okta_oauth2.exceptions import (
     TokenTooFarAway,
 )
 from okta_oauth2.tests.utils import (
+    TEST_PUBLIC_KEY,
     build_access_token,
     build_id_token,
     update_okta_settings,
@@ -112,7 +114,9 @@ def test_token_validator_gets_token_from_auth_code(rf, django_user_model):
 
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint", get_token_result
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_auth_code("authcode")
         assert "access_token" in tokens
@@ -130,7 +134,9 @@ def test_token_validator_gets_token_from_refresh_token(rf, django_user_model):
 
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint", get_token_result
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert "access_token" in tokens
@@ -168,7 +174,9 @@ def test_created_user_if_part_of_superuser_group(rf, settings, django_user_model
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_superuser_token_result,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
@@ -284,7 +292,9 @@ def test_validate_token_successfully_validates(rf):
     """A valid token should return the decoded token."""
     token = build_id_token()
     c = Config()
-    with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    with patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         decoded_token = tv.validate_token(token)
         assert decoded_token["jti"] == "randomid"
@@ -297,7 +307,8 @@ def test_wrong_key_raises_invalid_token(rf):
     token = build_id_token()
     c = Config()
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="wrongkey")
+        "okta_oauth2.tokens.TokenValidator._jwks",
+        Mock(return_value=newkeys(16)[0].save_pkcs1("PEM")),
     ), pytest.raises(InvalidTokenSignature):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -324,7 +335,7 @@ def test_invalid_issuer_in_decoded_token(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
     ), pytest.raises(IssuerDoesNotMatch):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -338,7 +349,7 @@ def test_invalid_audience_in_decoded_token(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
     ), pytest.raises(InvalidClientID):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -352,7 +363,7 @@ def test_expired_token_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
     ), pytest.raises(TokenExpired):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -367,7 +378,7 @@ def test_issue_time_is_too_far_in_the_past_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
     ), pytest.raises(TokenTooFarAway):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -381,7 +392,7 @@ def test_unmatching_nonce_raises_error(rf):
     c = Config()
 
     with patch(
-        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
     ), pytest.raises(NonceDoesNotMatch):
         tv = TokenValidator(c, "defaultnonce", rf.get("/"))
         tv.validate_token(token)
@@ -402,7 +413,9 @@ def test_groups_are_created_and_user_added(rf, settings, django_user_model):
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_normal_user_with_groups_token,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
 
@@ -433,7 +446,9 @@ def test_user_is_removed_from_groups(rf, settings, django_user_model):
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_normal_user_with_groups_token,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
 
@@ -462,7 +477,9 @@ def test_existing_user_is_escalated_to_superuser_group(rf, settings, django_user
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_superuser_token_result,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
@@ -495,7 +512,9 @@ def test_existing_superuser_is_deescalated_from_superuser_group(
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_normal_user_with_groups_token,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
@@ -523,7 +542,9 @@ def test_existing_user_is_escalated_to_staff_group(rf, settings, django_user_mod
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_staff_token_result,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
@@ -555,7 +576,9 @@ def test_existing_superuser_is_deescalated_from_staff_group(
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
         get_normal_user_with_groups_token,
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_refresh_token("refresh")
         assert isinstance(user, django_user_model)
@@ -574,7 +597,9 @@ def test_user_username_setting_returns_user_by_username_and_not_email(
 
     with patch(
         "okta_oauth2.tokens.TokenValidator.call_token_endpoint", get_token_result
-    ), patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         tv = TokenValidator(c, "defaultnonce", req)
         user, tokens = tv.tokens_from_auth_code("authcode")
         assert isinstance(user, django_user_model)

@@ -215,7 +215,7 @@ class TokenValidator:
         http://openid.net/specs/openid-connect-core-1_0.html#TokenResponseValidation)
         """
 
-        """ Step 1
+        """ Step 1:
             If encrypted, decrypt it using the keys and algorithms specified
             in the meta_data
 
@@ -226,24 +226,25 @@ class TokenValidator:
 
         try:
             decoded_token = jwt_python.decode(
-                token,
-                options={"verify_signature": False},
-                algorithms=self.config.jwt_algorithms,
+                token, options={"verify_signature": False}
             )
         except jwt_python.exceptions.DecodeError:
             raise InvalidToken("Unable to decode jwt")
 
-        key = self._jwks(jwt.get_unverified_header(token)["kid"])
+        dirty_alg = jwt.get_unverified_header(token)["alg"]
+        dirty_kid = jwt.get_unverified_header(token)["kid"]
+
+        key = self._jwks(dirty_kid)
         if key:
             # Validate the key using jose-jws
             try:
-                jws.verify(token, key, algorithms=self.config.jwt_algorithms)
+                jws.verify(token, key, algorithms=[dirty_alg])
             except (JWTError, JWSError) as err:
                 raise InvalidTokenSignature("Invalid token signature") from err
         else:
             raise InvalidTokenSignature("Unable to fetch public signing key")
 
-        """ Step 2
+        """ Step 2:
             Issuer Identifier for the OpenID Provider (which is typically
             obtained during Discovery) MUST exactly match the value of the
             iss (issuer) Claim.
@@ -252,7 +253,9 @@ class TokenValidator:
         """
 
         if decoded_token["iss"] != self.config.issuer:
-            """Step 3
+            raise IssuerDoesNotMatch("Issuer does not match")
+
+        """ Step 3:
             Client MUST validate:
                 aud (audience) contains the same `client_id` registered
                 iss (issuer) identified as the aud (audience)
@@ -261,13 +264,12 @@ class TokenValidator:
             The ID Token MUST be rejected if the ID Token does not list the
             Client as a valid audience, or if it contains additional audiences
             not trusted by the Client.
-            """
-            raise IssuerDoesNotMatch("Issuer does not match")
+        """
 
         if decoded_token["aud"] != self.config.client_id:
             raise InvalidClientID("Audience does not match client_id")
 
-        """ Step 6 : TLS server validation not implemented by Okta
+        """ Step 6: TLS server validation not implemented by Okta
             If ID Token is received via direct communication between Client and
             Token Endpoint, TLS server validation may be used to validate the
             issuer in place of checking token
@@ -275,14 +277,14 @@ class TokenValidator:
             alg Header. MUST use keys provided.
         """
 
-        """ Step 7
+        """ Step 7:
             The alg value SHOULD default to RS256 or sent in
             id_token_signed_response_alg param during Registration
 
             We don't need to test this. Okta always signs in RS256
         """
 
-        """ Step 8 : Not implemented due to Okta configuration
+        """ Step 8: Not implemented due to Okta configuration
 
             If JWT alg Header uses MAC based algorithm (HS256, HS384, etc) the
             octets of UTF-8 of the client_secret corresponding to the client_id
@@ -292,7 +294,8 @@ class TokenValidator:
         """
 
         if decoded_token["exp"] < int(time.time()):
-            """Step 9
+            """Step 9:
+
             The current time MUST be before the time represented by exp
             """
             raise TokenExpired

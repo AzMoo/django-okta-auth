@@ -27,10 +27,6 @@ class Config:
             self.manage_groups = settings.OKTA_AUTH.get("MANAGE_GROUPS", False)
             # Timeout in seconds for requests to Okta
             self.request_timeout = settings.OKTA_AUTH.get("REQUEST_TIMEOUT", 10)
-            # Valid JWT decode algorithms (https://pyjwt.readthedocs.io/en/latest/algorithms.html)
-            self.jwt_algorithms = settings.OKTA_AUTH.get(
-                "JWT_ALGORITHMS", get_default_algorithms()
-            )
 
             # OpenID Specific
             self.client_id = settings.OKTA_AUTH["CLIENT_ID"]
