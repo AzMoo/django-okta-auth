@@ -225,18 +225,19 @@ class TokenValidator:
         """
 
         try:
-            decoded_token = jwt_python.decode(token, verify=False)
+            decoded_token = jwt_python.decode(
+                token,
+                options={"verify_signature": False},
+                algorithms=self.config.jwt_algorithms,
+            )
         except jwt_python.exceptions.DecodeError:
             raise InvalidToken("Unable to decode jwt")
 
-        dirty_alg = jwt.get_unverified_header(token)["alg"]
-        dirty_kid = jwt.get_unverified_header(token)["kid"]
-
-        key = self._jwks(dirty_kid)
+        key = self._jwks(jwt.get_unverified_header(token)["kid"])
         if key:
             # Validate the key using jose-jws
             try:
-                jws.verify(token, key, algorithms=[dirty_alg])
+                jws.verify(token, key, algorithms=self.config.jwt_algorithms)
             except (JWTError, JWSError) as err:
                 raise InvalidTokenSignature("Invalid token signature") from err
         else:

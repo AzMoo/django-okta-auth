@@ -27,7 +27,7 @@ SUPERUSER_GROUP = "Superusers"
 STAFF_GROUP = "Staff"
 
 KEY_1 = {
-    "alg": "RS256",
+    "alg": "HS256",
     "e": "AQAB",
     "n": """iKqiD4cr7FZKm6f05K4r-GQOvjRqjOeFmOho9V7SAXYwCyJluaGBLVvDWO1XlduPLOrsG_Wgs67SOG5qeLPR8T1zDK4bfJAo1Tvbw
             YeTwVSfd_0mzRq8WaVc_2JtEK7J-4Z0MdVm_dJmcMHVfDziCRohSZthN__WM2NwGnbewWnla0wpEsU3QMZ05_OxvbBdQZaDUsNSx4
@@ -39,7 +39,7 @@ KEY_1 = {
 }
 
 KEY_2 = {
-    "alg": "RS256",
+    "alg": "HS256",
     "e": "AQAB",
     "n": """l1hZ_g2sgBE3oHvu34T-5XP18FYJWgtul_nRNg-5xra5ySkaXEOJUDRERUG0HrR42uqf9jYrUTwg9fp-SqqNIdHRaN8EwRSDRsKAwK
             3HIJ2NJfgmrrO2ABkeyUq6rzHxAumiKv1iLFpSawSIiTEBJERtUCDcjbbqyHVFuivIFgH8L37-XDIDb0XG-R8DOoOHLJPTpsgH-rJe
@@ -98,7 +98,7 @@ def test_discovery_document_sets_json(mock_get):
     mock_get.return_value = Mock(ok=True)
     mock_get.return_value.json.return_value = {"key": "value"}
 
-    d = DiscoveryDocument("http://notreal.example.com")
+    d = DiscoveryDocument(Config())
     assert d.getJson() == {"key": "value"}
 
 
