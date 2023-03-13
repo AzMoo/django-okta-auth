@@ -187,6 +187,61 @@ def test_created_user_if_part_of_superuser_group(rf, settings, django_user_model
         assert user.is_superuser
 
 
+@pytest.mark.django_db
+def test_superuser_not_removed_if_no_superuser_group(rf, settings, django_user_model):
+    """
+    If there is no superuser group set, ensure an existing
+    superuser does not have their superuser or staff status revoked.
+    """
+    settings.OKTA_AUTH = update_okta_settings(
+        settings.OKTA_AUTH, "SUPERUSER_GROUP", None
+    )
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    django_user_model.objects.create_superuser("fakemail@notreal.com")
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_token_result,
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        assert isinstance(user, django_user_model)
+        assert user.is_superuser == True
+        assert user.is_staff == True
+
+
+@pytest.mark.django_db
+def test_staff_not_removed_if_no_staff_group(rf, settings, django_user_model):
+    """
+    If there is no staff group set, ensure an existing
+    staff user does not have their staff status revoked.
+    """
+    settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "STAFF_GROUP", None)
+
+    c = Config()
+    req = rf.get("/")
+    add_session(req)
+
+    django_user_model.objects.create_user("fakemail@notreal.com", is_staff=True)
+
+    with patch(
+        "okta_oauth2.tokens.TokenValidator.call_token_endpoint",
+        get_token_result,
+    ), patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
+        tv = TokenValidator(c, "defaultnonce", req)
+        user, tokens = tv.tokens_from_refresh_token("refresh")
+        assert isinstance(user, django_user_model)
+        assert user.is_staff == True
+
+
 @patch("okta_oauth2.tokens.requests.post")
 def test_call_token_endpoint_returns_tokens(mock_post, rf):
     """
@@ -237,7 +292,7 @@ def test_call_token_endpoint_handles_error(mock_post, rf):
 
 @patch("okta_oauth2.tokens.requests.post")
 def test_request_userinfo(mock_post, rf):
-    """ Test jwks method returns json """
+    """Test jwks method returns json"""
     mock_post.return_value = Mock(ok=True)
     mock_post.return_value.json.return_value = mock_request_jwks(None)
 
