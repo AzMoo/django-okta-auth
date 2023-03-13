@@ -230,11 +230,11 @@ _List[str]_. A list or tuple of URL regular expressions that should be accessibl
 
 **_SUPERUSER_GROUP_**
 
-_str_. Members of this group will have the django `is_superuser` user flags set.
+_str_. Members of this group will have the django `is_superuser` user flags set. If this is unset or set to None a user's superuser flag will not be managed. Default is `None`.
 
 **_STAFF_GROUP_**
 
-_str_. Members of this group will have the django `is_staff` user flags set.
+_str_. Members of this group will have the django `is_staff` user flags set. If this is unset or set to None a user's staff flag will not be managed. Default is `None`.
 
 **_MANAGE_GROUPS_**
 
