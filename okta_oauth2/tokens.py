@@ -111,16 +111,20 @@ class TokenValidator:
                     username=username, email=claims["email"]
                 )
 
-            user.is_superuser = bool(
-                self.config.superuser_group
-                and "groups" in claims
-                and self.config.superuser_group in claims["groups"]
-            )
-            user.is_staff = bool(
-                self.config.staff_group
-                and "groups" in claims
-                and self.config.staff_group in claims["groups"]
-            )
+            if self.config.superuser_group:
+                user.is_superuser = bool(
+                    self.config.superuser_group
+                    and "groups" in claims
+                    and self.config.superuser_group in claims["groups"]
+                )
+
+            if self.config.staff_group:
+                user.is_staff = bool(
+                    self.config.staff_group
+                    and "groups" in claims
+                    and self.config.staff_group in claims["groups"]
+                )
+
             user.save()
 
             if self.config.manage_groups:
@@ -188,9 +192,13 @@ class TokenValidator:
 
     def request_userinfo(self, access_token):
         discovery_doc = self.discovery_document.getJson()
-        r = requests.post(discovery_doc["userinfo_endpoint"], headers={
-            "Authorization": "Bearer " + access_token,
-        })
+        r = requests.post(
+            discovery_doc["userinfo_endpoint"],
+            headers={
+                "Authorization": "Bearer " + access_token,
+            },
+            timeout=self.config.request_timeout,
+        )
         return r.json()
 
     def request_jwks(self):
