@@ -2,9 +2,14 @@ from unittest.mock import Mock, patch
 
 from django.http import HttpResponse
 from django.urls import reverse
+
 from okta_oauth2.exceptions import TokenExpired
 from okta_oauth2.middleware import OktaMiddleware
-from okta_oauth2.tests.utils import build_id_token, update_okta_settings
+from okta_oauth2.tests.utils import (
+    TEST_PUBLIC_KEY,
+    build_id_token,
+    update_okta_settings,
+)
 
 
 def test_no_token_redirects_to_login(rf):
@@ -44,7 +49,9 @@ def test_valid_token_returns_response(rf):
     # We're building a token here that we know will be valid
     token = build_id_token(nonce=nonce)
 
-    with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
+    with patch(
+        "okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value=TEST_PUBLIC_KEY)
+    ):
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = nonce
         request.session = {"tokens": {"id_token": token}}
@@ -64,7 +71,6 @@ def test_token_expired_triggers_refresh(rf):
     with patch(
         "okta_oauth2.tokens.TokenValidator.validate_token", raises_token_expired
     ), patch("okta_oauth2.tokens.TokenValidator.tokens_from_refresh_token"):
-
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = "123456"
         request.session = {
@@ -91,7 +97,6 @@ def test_token_expired_triggers_refresh_with_no_refresh(rf):
     with patch(
         "okta_oauth2.tokens.TokenValidator.validate_token", raises_token_expired
     ), patch("okta_oauth2.tokens.TokenValidator.tokens_from_refresh_token"):
-
         request = rf.get("/")
         request.COOKIES["okta-oauth-nonce"] = "123456"
         request.session = {"tokens": {"id_token": "imanexpiredtoken"}}

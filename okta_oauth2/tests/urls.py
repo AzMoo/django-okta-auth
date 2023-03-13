@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.urls import include, path
+
 from okta_oauth2.decorators import okta_login_required
 
 

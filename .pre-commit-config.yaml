@@ -1,44 +1,38 @@
-- repo: https://github.com/ambv/black
-  rev: stable
-  hooks:
-    - id: black
-      language_version: python3.8
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v1.2.3
-  hooks:
-    - id: check-added-large-files
-      args: ["--maxkb=1024"]
-    - id: check-case-conflict
-    - id: check-merge-conflict
-    - id: debug-statements
-    - id: end-of-file-fixer
-    - id: mixed-line-ending
-      args: ["--fix=lf"]
-    - id: trailing-whitespace
-    - id: requirements-txt-fixer
-    - id: flake8
-      exclude: migrations\/[^/]*\.py$|settings\.py$|vendor\/[^/]*\.*$|assets\/[^/]*\.*$
-- repo: https://github.com/pre-commit/mirrors-isort
-  rev: v4.3.4
-  hooks:
-    - id: isort
-      exclude: migrations\/[^/]*\.py$
-- repo: local
-  hooks:
-    - id: django-migrations
-      name: Django unmigrated changes
-      description: "This hook checks for unmigrated changes"
-      entry: sh -c "! poetry run parts makemigrations --dry-run --exit"
-      language: system
-      files: \.py$
-- repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.6
-  hooks:
-    - id: forbid-tabs
-      exclude: Makefile|\.bat$|vendor\/|assets\/
-- repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-  rev: v1.0.4
-  hooks:
-    - id: python-bandit-vulnerability-check
-      args: [--recursive]
-      exclude: tests\/
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+        language_version: python3.10
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: trailing-whitespace
+      - id: requirements-txt-fixer
+        exclude: migrations\/[^/]*\.py$|settings\.py$|vendor\/[^/]*\.*$|assets\/[^/]*\.*$
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        exclude: migrations\/[^/]*\.py$
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.4.2
+    hooks:
+      - id: forbid-tabs
+        exclude: Makefile|\.bat$|vendor\/|assets\/
+      - id: remove-tabs
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+    - id: bandit
+      args: ["-c", "pyproject.toml"]
+      additional_dependencies: ["bandit[toml]"]
