@@ -1,9 +1,9 @@
-from django.urls import path
+from django.conf.urls import url
 
 from . import views
 
 urlpatterns = [
-    path("login/", views.login, name="login"),
-    path("oauth2/callback/", views.callback, name="callback"),
-    path("logout/", views.logout, name="logout"),
+    url("login/", views.login, name="login"),
+    url("oauth2/callback/", views.callback, name="callback"),
+    url("logout/", views.logout, name="logout"),
 ]
