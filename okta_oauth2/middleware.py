@@ -38,7 +38,7 @@ class OktaAdminMiddleware(object):
     Middleware to validate JWT tokens set by Okta for authentication.
     """
 
-    def __init__(self, get_response):
+    def __init__(self):
         self.config = Config()
     
     def process_response(self, request, response):
