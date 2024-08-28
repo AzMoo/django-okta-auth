@@ -17,7 +17,7 @@ from .conf import Config
 logger = logging.getLogger(__name__)
 
 
-def login(request):
+"""def login(request):
     config = Config()
 
     okta_config = {
@@ -31,7 +31,12 @@ def login(request):
 
     _delete_cookies(response)
 
-    return response
+    return response"""
+
+def login(request):
+    config = Config()
+
+    return redirect(config.auth_url)
 
 
 def callback(request):
