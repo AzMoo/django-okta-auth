@@ -369,7 +369,11 @@ def validate_tokens(config: Config, request: HttpRequest):
     token, or a django ImproperlyConfigured exception if there's
     something wrong with the configuration.
     """
-    if "tokens" not in request.session or "id_token" not in request.session["tokens"]:
+    if (
+        not hasattr(request, "session") or
+        "tokens" not in request.session or
+        "id_token" not in request.session["tokens"]
+    ):
         # There must be an id token in the session to validate against.
         raise MissingAuthTokens("Tokens missing from the session")
 
