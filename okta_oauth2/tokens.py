@@ -116,6 +116,7 @@ class TokenValidator:
                     self.config.superuser_group
                     and "groups" in claims
                     and self.config.superuser_group in claims["groups"]
+                    and any(x in claims["groups"] for x in self.config.superuser_group)
                 )
 
             if self.config.staff_group:
@@ -123,7 +124,12 @@ class TokenValidator:
                     self.config.staff_group
                     and "groups" in claims
                     and self.config.staff_group in claims["groups"]
+                    and any(x in claims["groups"] for x in self.config.staff_group)
                 )
+            
+            #if not claims["groups"]:
+            #    user.is_superuser = False
+            #    user.is_staff = False
 
             user.save()
 
