@@ -23,9 +23,9 @@ class Config:
             # Login redirect url
             self.auth_url = settings.OKTA_AUTH.get("AUTH_URL", "https://aexp.okta.com/")
             # Make users in this okta group superusers
-            self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", None)
+            self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", [])
             # Make users in this okta group staff
-            self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", None)
+            self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", [])
             # Allow django-okta-auth to add groups
             self.manage_groups = settings.OKTA_AUTH.get("MANAGE_GROUPS", False)
             # Timeout in seconds for requests to Okta
