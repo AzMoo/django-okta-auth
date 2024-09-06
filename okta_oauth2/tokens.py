@@ -118,11 +118,6 @@ class TokenValidator:
                     and self.config.superuser_group in claims["groups"]
                     and any(x in tokens["claims"]["groups"] for x in self.config.superuser_group)
                 )
-                if (
-                    "groups" in claims and
-                    not any(x in claims["groups"] for x in self.config.superuser_group)
-                ):
-                    user.is_superuser = False
 
             if self.config.staff_group:
                 user.is_staff = bool(
@@ -131,15 +126,6 @@ class TokenValidator:
                     and self.config.staff_group in claims["groups"]
                     and any(x in tokens["claims"]["groups"] for x in self.config.staff_group)
                 )
-                if (
-                    "groups" in claims and
-                    not any(x in claims["groups"] for x in self.config.staff_group)
-                ):
-                    user.is_staff = False
-            
-            #if not claims["groups"]:
-            #    user.is_superuser = False
-            #    user.is_staff = False
 
             user.save()
 
@@ -157,9 +143,13 @@ class TokenValidator:
             self.request.session.modified = True
 
             if "groups" in tokens["claims"]:
-                if not any(x in tokens["claims"]["groups"] for x in self.config.superuser_group):
+                if any(x in tokens["claims"]["groups"] for x in self.config.superuser_group):
+                    user.is_superuser = True
+                else:
                     user.is_superuser = False
-                if not any(x in tokens["claims"]["groups"] for x in self.config.staff_group):
+                if any(x in tokens["claims"]["groups"] for x in self.config.staff_group):
+                    user.is_staff = True
+                else:
                     user.is_staff = False
 
         return user, tokens
