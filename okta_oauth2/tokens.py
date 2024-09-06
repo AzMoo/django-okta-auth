@@ -115,14 +115,14 @@ class TokenValidator:
                 user.is_superuser = bool(
                     self.config.superuser_group
                     and "groups" in claims
-                    and any(x in claims["groups"] for x in self.config.superuser_group)
+                    and any(x in claims["groups"][0] for x in self.config.superuser_group)
                 )
 
             if len(self.config.staff_group):
                 user.is_staff = bool(
                     self.config.staff_group
                     and "groups" in claims
-                    and any(x in claims["groups"] for x in self.config.staff_group)
+                    and any(x in claims["groups"][0] for x in self.config.staff_group)
                 )
 
             user.save()
