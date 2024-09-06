@@ -156,6 +156,12 @@ class TokenValidator:
             self.request.session["tokens"] = tokens
             self.request.session.modified = True
 
+            if "groups" in tokens["claims"]:
+                if not any(x in tokens["claims"]["groups"] for x in self.config.superuser_group):
+                    user.is_superuser = False
+                if not any(x in tokens["claims"]["groups"] for x in self.config.staff_group):
+                    user.is_staff = False
+
         return user, tokens
 
     @property
