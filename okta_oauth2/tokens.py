@@ -111,7 +111,23 @@ class TokenValidator:
                     email=claims["email"]
                 )
 
-            user.set_okta_perms(claims['groups'])
+            if getattr(user, 'set_okta_perms', False):
+                user.set_okta_perms(claims['groups'])
+            else:
+                if self.config.superuser_group:
+                    user.is_superuser = bool(
+                        self.config.superuser_group
+                        and "groups" in claims
+                        and self.config.superuser_group in claims["groups"]
+                    )
+
+                if self.config.staff_group:
+                    user.is_staff = bool(
+                        self.config.staff_group
+                        and "groups" in claims
+                        and self.config.staff_group in claims["groups"]
+                    )
+
             user.save()
 
             if self.config.manage_groups:
