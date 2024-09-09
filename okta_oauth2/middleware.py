@@ -31,27 +31,3 @@ class OktaMiddleware:
 
     def is_public_url(self, url):
         return any(public_url.match(url) for public_url in self.config.public_urls)
-
-
-class OktaAdminMiddleware(object):
-    """
-    Middleware to validate JWT tokens set by Okta for authentication.
-    """
-
-    def __init__(self):
-        self.config = Config()
-    
-    def process_response(self, request, response):
-        logger.debug("Entering Okta Admin Middleware")
-
-        # We don't need tokens for public url's so just do nothing
-        if not self.is_public_url(request.path):
-            redirect_response = validate_or_redirect(self.config, request)
-
-            if redirect_response:
-                return redirect_response
-        
-        return response
-
-    def is_public_url(self, url):
-        return any(public_url.match(url) for public_url in self.config.public_urls)
