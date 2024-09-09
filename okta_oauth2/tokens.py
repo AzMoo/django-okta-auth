@@ -111,22 +111,6 @@ class TokenValidator:
                     email=claims["email"]
                 )
 
-            if len(self.config.superuser_group):
-                user.is_superuser = bool(
-                    self.config.superuser_group
-                    and "groups" in claims
-                    and any(x in claims["groups"][0] for x in self.config.superuser_group)
-                )
-
-            if len(self.config.staff_group):
-                user.is_staff = bool(
-                    self.config.staff_group
-                    and "groups" in claims
-                    and any(x in claims["groups"][0] for x in self.config.staff_group)
-                )
-
-            user.save()
-
             if self.config.manage_groups:
                 self.manage_groups(user, claims["groups"])
 
@@ -140,16 +124,17 @@ class TokenValidator:
             self.request.session["tokens"] = tokens
             self.request.session.modified = True
 
+            user.is_staff = False
+            user.is_superuser = False
+
             if "groups" in tokens["claims"]:
-                if any(x in tokens["claims"]["groups"][0] for x in self.config.superuser_group):
-                    user.is_superuser = True
-                else:
-                    user.is_superuser = False
-                if any(x in tokens["claims"]["groups"][0] for x in self.config.staff_group):
-                    user.is_staff = True
-                else:
-                    user.is_staff = False
-                user.save()
+                for group in tokens["claims"]["groups"]:
+                    if any(x in group for x in self.config.superuser_group):
+                        user.is_superuser = True
+                    if any(x in group for x in self.config.staff_group):
+                        user.is_staff = True
+
+            user.save()
 
         return user, tokens
 
