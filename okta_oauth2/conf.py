@@ -21,9 +21,9 @@ class Config:
             # Configuration object
             self.org_url = settings.OKTA_AUTH["ORG_URL"]
             # Make users in this okta group superusers
-            self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", [])
+            self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", None)
             # Make users in this okta group staff
-            self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", [])
+            self.staff_group = settings.OKTA_AUTH.get("STAFF_GROUP", None)
             # Allow django-okta-auth to add groups
             self.manage_groups = settings.OKTA_AUTH.get("MANAGE_GROUPS", False)
             # Timeout in seconds for requests to Okta
