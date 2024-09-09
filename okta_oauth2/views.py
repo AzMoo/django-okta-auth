@@ -20,7 +20,18 @@ logger = logging.getLogger(__name__)
 def login(request):
     config = Config()
 
-    return redirect(config.auth_url)
+    okta_config = {
+        "clientId": config.client_id,
+        "url": config.org_url,
+        "redirectUri": str(config.redirect_uri),
+        "scope": config.scopes,
+        "issuer": config.issuer,
+    }
+    response = render(request, "okta_oauth2/login.html", {"config": okta_config})
+
+    _delete_cookies(response)
+
+    return response
 
 
 def callback(request):

@@ -20,8 +20,6 @@ class Config:
         try:
             # Configuration object
             self.org_url = settings.OKTA_AUTH["ORG_URL"]
-            # Login redirect url
-            self.auth_url = settings.OKTA_AUTH.get("AUTH_URL", "https://aexp.okta.com/")
             # Make users in this okta group superusers
             self.superuser_group = settings.OKTA_AUTH.get("SUPERUSER_GROUP", [])
             # Make users in this okta group staff
