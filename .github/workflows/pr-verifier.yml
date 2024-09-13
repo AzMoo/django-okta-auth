@@ -1,0 +1,11 @@
+name: PR Verifier
+on:
+  pull_request:
+    # Required by GitHub Action; this make sure this workflow is fired off every time the PR is updated
+    types: [opened, edited, synchronize, reopened]
+
+# https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
+jobs:
+  call-shared-workflow:
+    uses: resy/shared-gha/.github/workflows/pr-verifier.yml@main
+    secrets: inherit
