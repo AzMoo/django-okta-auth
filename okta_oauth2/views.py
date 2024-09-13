@@ -50,7 +50,7 @@ def callback(request):
             return HttpResponseServerError(error_description)
         return HttpResponseRedirect(reverse("okta_oauth2:login"))
 
-    code = request.GET["code"]
+    CODE = REQUEST.GET["code"]
     state = request.GET["state"]
 
     # Get state and nonce from cookie
