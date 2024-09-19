@@ -10,7 +10,7 @@ def test_decorator_prevents_unauthenticated_access(client: Client):
     """If we're not authenticated we should return a redirect to the login"""
     response = client.get("/decorated/")
     assert response.status_code == 302
-    assert response.url == "/accounts/login/"
+    assert response.url == "/accounts/login"
 
 
 @pytest.mark.django_db
@@ -49,4 +49,4 @@ def test_decorator_disallows_access_to_invalid_token(client: Client):
     with patch("okta_oauth2.tokens.TokenValidator._jwks", Mock(return_value="secret")):
         response = client.get("/decorated/")
         assert response.status_code == 302
-        assert response.url == "/accounts/login/"
+        assert response.url == "/accounts/login"

@@ -28,9 +28,9 @@ def test_public_named_urls_are_built(settings):
     config = Config()
     assert config.public_urls == [
         re.compile("^/named/$"),
-        re.compile("^/accounts/login/$"),
-        re.compile("^/accounts/logout/$"),
-        re.compile("^/accounts/oauth2/callback/$"),
+        re.compile("^/accounts/login$"),
+        re.compile("^/accounts/logout$"),
+        re.compile("^/accounts/auth$"),
     ]
 
 
@@ -44,7 +44,7 @@ def test_invalid_public_named_urls_are_ignored(settings):
     )
     config = Config()
     assert config.public_urls == [
-        re.compile("^/accounts/login/$"),
-        re.compile("^/accounts/logout/$"),
-        re.compile("^/accounts/oauth2/callback/$"),
+        re.compile("^/accounts/login$"),
+        re.compile("^/accounts/logout$"),
+        re.compile("^/accounts/auth$"),
     ]
