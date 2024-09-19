@@ -107,9 +107,16 @@ class TokenValidator:
             try:
                 user = UserModel._default_manager.get_by_natural_key(username)
             except UserModel.DoesNotExist:
-                user = UserModel._default_manager.create_user(
-                    email=claims["email"]
-                )
+                if self.config.use_username:
+                    user = UserModel._default_manager.create_user(
+                        email=claims["email"],
+                        username=username
+                    )
+
+                else:
+                    user = UserModel._default_manager.create_user(
+                        email=claims["email"]
+                    )
 
             if getattr(user, 'set_okta_perms', False):
                 user.set_okta_perms(claims['groups'])

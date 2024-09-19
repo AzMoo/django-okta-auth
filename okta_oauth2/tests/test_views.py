@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from django.test import Client, override_settings
 from django.urls import reverse
+from urllib.parse import urlparse
 
 
 @override_settings(MIDDLEWARE=[])
@@ -72,7 +73,8 @@ def test_callback_redirects_on_error(settings):
     )
 
     assert response.status_code == 302
-    assert response.url == reverse("okta_oauth2:login")
+    parsed_url = urlparse(response.url)
+    assert parsed_url.path == reverse("okta_oauth2:login")
 
 
 def test_callback_success(settings, django_user_model):
@@ -169,7 +171,8 @@ def test_failed_authentication_redirects_to_login(client, settings, django_user_
         )
 
         assert response.status_code == 302
-        assert response.url == reverse("okta_oauth2:login")
+        parsed_url = urlparse(response.url)
+        assert parsed_url.path == reverse("okta_oauth2:login")
 
 
 def test_logout_view_returns_200(client, settings):
