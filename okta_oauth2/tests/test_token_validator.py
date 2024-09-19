@@ -114,6 +114,7 @@ def test_token_validator_gets_token_from_auth_code(rf, django_user_model):
     """
     c = Config()
     req = rf.get("/")
+    c.use_username = True
     add_session(req)
 
     with patch(
@@ -134,6 +135,7 @@ def test_token_validator_gets_token_from_refresh_token(rf, django_user_model):
     """
     c = Config()
     req = rf.get("/")
+    c.use_username = True
     add_session(req)
 
     with patch(
@@ -154,6 +156,7 @@ def test_handle_token_result_handles_missing_tokens(rf):
     and return the empty token dict so we can check why later.
     """
     c = Config()
+    c.use_username = True
     req = rf.get("/")
 
     tv = TokenValidator(c, "defaultnonce", req)
@@ -173,6 +176,7 @@ def test_created_user_if_part_of_superuser_group(rf, settings, django_user_model
 
     c = Config()
     req = rf.get("/")
+    c.use_username = True
     add_session(req)
 
     with patch(
@@ -480,6 +484,7 @@ def test_groups_are_created_and_user_added(rf, settings, django_user_model):
     settings.OKTA_AUTH = update_okta_settings(settings.OKTA_AUTH, "MANAGE_GROUPS", True)
 
     c = Config()
+    c.use_username = True
     req = rf.get("/")
     add_session(req)
 

@@ -2,7 +2,8 @@ import re
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from jwt.algorithms import get_default_algorithms
 
 # We can't check for tokens on these URL's

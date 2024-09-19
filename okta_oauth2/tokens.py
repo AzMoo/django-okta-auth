@@ -107,23 +107,33 @@ class TokenValidator:
             try:
                 user = UserModel._default_manager.get_by_natural_key(username)
             except UserModel.DoesNotExist:
-                user = UserModel._default_manager.create_user(
-                    username=username, email=claims["email"]
-                )
+                if self.config.use_username:
+                    user = UserModel._default_manager.create_user(
+                        email=claims["email"],
+                        username=username
+                    )
 
-            if self.config.superuser_group:
-                user.is_superuser = bool(
-                    self.config.superuser_group
-                    and "groups" in claims
-                    and self.config.superuser_group in claims["groups"]
-                )
+                else:
+                    user = UserModel._default_manager.create_user(
+                        email=claims["email"]
+                    )
 
-            if self.config.staff_group:
-                user.is_staff = bool(
-                    self.config.staff_group
-                    and "groups" in claims
-                    and self.config.staff_group in claims["groups"]
-                )
+            if getattr(user, 'set_okta_perms', False):
+                user.set_okta_perms(claims['groups'])
+            else:
+                if self.config.superuser_group:
+                    user.is_superuser = bool(
+                        self.config.superuser_group
+                        and "groups" in claims
+                        and self.config.superuser_group in claims["groups"]
+                    )
+
+                if self.config.staff_group:
+                    user.is_staff = bool(
+                        self.config.staff_group
+                        and "groups" in claims
+                        and self.config.staff_group in claims["groups"]
+                    )
 
             user.save()
 
@@ -369,7 +379,11 @@ def validate_tokens(config: Config, request: HttpRequest):
     token, or a django ImproperlyConfigured exception if there's
     something wrong with the configuration.
     """
-    if "tokens" not in request.session or "id_token" not in request.session["tokens"]:
+    if (
+        not hasattr(request, "session") or
+        "tokens" not in request.session or
+        "id_token" not in request.session["tokens"]
+    ):
         # There must be an id token in the session to validate against.
         raise MissingAuthTokens("Tokens missing from the session")
 
