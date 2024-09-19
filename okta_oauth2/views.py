@@ -54,8 +54,8 @@ def callback(request):
     state = request.GET["state"]
 
     # Get state and nonce from cookie
-    cookie_state = request.COOKIES["okta-oauth-state"]
-    cookie_nonce = request.COOKIES["okta-oauth-nonce"]
+    cookie_state = request.COOKIES.get("okta-oauth-state", None)
+    cookie_nonce = request.COOKIES.get("okta-oauth-nonce", None)
 
     # Verify state
     if state != cookie_state:
