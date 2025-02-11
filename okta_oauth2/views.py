@@ -11,6 +11,7 @@ from django.http import (
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
+from django.utils.html import escape
 
 from .conf import Config
 
@@ -60,7 +61,7 @@ def callback(request):
     # Verify state
     if state != cookie_state:
         return HttpResponseBadRequest(
-            "Value {} does not match the assigned state".format(state)
+            "Value {} does not match the assigned state".format(escape(state))
         )
 
     user = authenticate(request, auth_code=code, nonce=cookie_nonce)
