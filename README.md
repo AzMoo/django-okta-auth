@@ -89,16 +89,17 @@ urlpatterns = [
 
 In the Okta admin console create your application with the following steps:
 
-1. Click `Create New App`
-2. Choose the `Web` platform
-3. Choose the `OpenID Connect` Sign on method
-4. Click the `Create` button
+1. Click `Create New Create App Integration`
+2. Choose the `OIDC - OpenID Connect` Sign on method
+3. Choose the `Web Application` type
+4. Click the `Next` button
 5. Give the application a name and choose a logo if desired
 6. Add the URL to the login view as defined in the previous section, eg. `http://localhost:8000/accounts/login/`
-7. Click the `Save` button
-8. In the General Settings of the application click edit and check `Authorization Code` and the `Refresh Token` under `Allowed grant types`.
-9. Save the settings
-10. Take note of the `Client ID` and the `Client secret` in the Client Credentials for use in the next section. It is important to note that the `Client secret` is confidential and under no circumstances should be exposed publicly.
+7. Select your preferred Controlled access type
+8. Click the `Save` button
+9. In the General Settings of the application click edit and check `Authorization Code` and the `Refresh Token` under `Grant type`.
+10. Save the settings
+11. Take note of the `Client ID` and the `Client secret` in the Client Credentials for use in the next section. It is important to note that the `Client secret` is confidential and under no circumstances should be exposed publicly.
 
 ### Django Okta Settings
 
@@ -180,6 +181,8 @@ A minimal template for the login could be:
 </html>
 ```
 
+If you use this template, then you also need to add your server as a Trusted Origin in the Okta admin console. Navigate to `Security/API/Trusted Origins`, click `Add origin` and select at least `CORS` and `Redirect`.
+
 ## Settings Reference
 
 **_ORG_URL_**:
@@ -202,7 +205,7 @@ _str_. The Client Secret provided by your Okta Application.
 
 _str_. The scopes requested from the OpenID Authorization server. At the very least this needs to be `"openid profile email"` but if you want to use refresh tokens you will need `"openid profile email offline_access"`. This is the default.
 
-If you want Okta to manage your groups then you should also include `groups` in your scopes.
+If you want Okta to manage your groups then you should also include `groups` in your scopes. In that case, make sure your authorization server has the `groups` scope enabled. You can do so by navigating to `Security/API/Authorization Servers`, editing the default server, and adding the `groups` scope.
 
 **_REDIRECT_URI_**
 
