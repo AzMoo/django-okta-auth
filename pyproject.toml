@@ -1,15 +1,9 @@
 [tool.poetry]
-name = "django-okta-auth"
-version = "0.8.0"
-description = "Django Authentication for Okta OpenID"
-authors = ["Matt Magin <matt.magin@cmv.com.au>"]
-license = "MIT"
 packages = [
     {include = "okta_oauth2"}
 ]
-readme = "README.md"
-homepage = "https://github.com/AzMoo/django-okta-auth"
 repository = "https://github.com/AzMoo/django-okta-auth"
+requires-poetry = "2.1.1"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -33,3 +27,13 @@ exclude_dirs = ["tests"]
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[project]
+requires-python = "^3.8"
+name = "django-okta-auth"
+version = "0.8.0"
+readme = "README.md"
+license = "MIT"
+description = "Django Authentication for Okta OpenID"
+homepage = "https://github.com/AzMoo/django-okta-auth"
+authors = [{name = "Matt Magin",email = "<matt.magin@cmv.com.au>"}]
